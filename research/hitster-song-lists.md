@@ -11,6 +11,23 @@ Research for issue #2 (map: #1). Date: 2026-10-26.
 - **Recommendation:** build the song table from Jumbo's card-to-Spotify mapping, keyed on `(sku, card_number)`. Seed years from the songseeker CSV for Original NL and from hitify for the other editions, and fall back to MusicBrainz first-release year. Store `year_source` on each row, and give Bram an in-app "fix year" action so he can correct a year from his physical cards. Never use Spotify's album `release_date` as the answer.
 - **Licensing:** this is fine for a private, non-commercial practice app, but there is one serious flag. Spotify's Developer Policy III.2 says "Do not create a game, including trivia quizzes." That affects the whole app concept, not just the song data (see below).
 
+### Impact of the Spotify API restrictions (Feb 2026)
+
+According to the Spotify research thread, new development-mode apps:
+- can only read tracks of playlists the user **owns or collaborates on**, so the official Hitster playlists come back empty;
+- get at most 10 search results;
+- no longer have the bulk tracks endpoint.
+
+This makes the recommendation above stronger. **The app should never need to read a Hitster playlist or search Spotify at runtime.**
+- **Seed our own Supabase `songs` table offline** with `(edition, sku, card_number, spotify_track_id, artist, title, year, year_source)`:
+  - `spotify_track_id` comes from the Jumbo `gameset_database.json`, i.e. the exact tracks the official app plays.
+  - Artist, title and year come from songseeker (Original NL) and hitify (other editions).
+  - Both are keyed on card number, so joining them needs no Spotify metadata call.
+  - Hitify's per-edition pages also embed Spotify track links, which can help fill gaps.
+- Playback only needs the track URI (`spotify:track:<id>`), and the playback SDK / Connect calls are not playlist reads.
+- **Fallback:** if any edition lacks a Jumbo mapping, Bram copies the official playlist into his own account once (in the Spotify client: select all, then "Add to playlist → New playlist"). He then owns it and the API can read it. This is a one-off import tool, not a runtime dependency.
+- Cover art and the like, if wanted, come from single-track `GET /tracks/{id}` calls during the one-off seed (cached), or from the oEmbed endpoint. Check that single-track lookup still works for new apps in the Spotify research ticket.
+
 ## 1. Dutch editions
 
 The Dutch Hitster site lists these products: Original, Summer (Summer Party), Guilty Pleasures, 100% NL, Celebration, Bingo, Battle of the Generations, Flying Mic, Movies & TV Soundtracks, and Rock. Source: [hitstergame.com/nl-nl](https://hitstergame.com/nl-nl/).
