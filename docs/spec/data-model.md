@@ -16,7 +16,8 @@ Settled with Bram on 2026-10-29 in [Define the data model and song import](https
 - The card year and the Leitner box belong to the **song**, not the card.
 - A song is dealt only when it has a card year and `playable_nl = true`. Uncertain years still play.
 - `kind` comes from Jumbo's `ArtistType` (solo/group), with MusicBrainz as a fallback. It drives the "surname alone counts for persons only" rule (#7).
-- The effective card year is the `year_overrides` row if one exists, otherwise `songs.card_year`.
+- The effective card year is the `year_overrides` row if one exists, otherwise `songs.card_year`. The view `song_card_years` gives it per song, and `playable_songs` lists only the songs that may be dealt.
+- Artists are keyed on their Spotify artist ID. When a card lists a solo artist differently from Spotify, the card's spelling is added as an alias.
 - Only a player with `profiles.is_admin` (Bram) can write `year_overrides`. The answer screen shows him a "Jaar klopt niet" button.
 
 ## Per player (Row Level Security: only your own rows)
@@ -49,5 +50,6 @@ Settled with Bram on 2026-10-29 in [Define the data model and song import](https
 2. Sources: Jumbo `gameset_database.json` (card to Spotify track), the songseeker CSV (Original NL), hitify (other editions), and MusicBrainz first-release as a fallback. The raw sources are snapshotted in the repo, so the app never fetches them live.
 3. One `GET /tracks/{id}?market=NL` per track for the cover and NL playability.
 4. Upsert on (`sku`, `card_number`) and `spotify_track_id`. Songs are deduplicated on the Spotify track ID. `year_overrides` is never touched.
-5. Each run prints a report per edition: cards, songs without a year, uncertain years and songs not playable in NL.
-6. An edition missing from Jumbo's file: Bram copies the official playlist into his own account once, and the script reads that playlist.
+5. A run looks up every track before it writes anything, then writes only rows that changed, so a second run reports no changes. `--dry-run` reports without writing.
+6. Each run prints a report per edition: cards, songs without a year, uncertain years and songs not playable in NL.
+7. An edition missing from Jumbo's file: Bram copies the official playlist into his own account once, and the script reads that playlist.

@@ -1,0 +1,23 @@
+{
+  "updated_on": "2026-10-29",
+  "gamesets": [
+    {
+      "sku": "aaaa0001",
+      "gameset_data": {
+        "gameset_language": "nl",
+        "gameset_name": "Hitster Original",
+        "cards": [
+          { "CardNumber": "00001", "Spotify": "1111111111111111111111", "ArtistType": "solo" },
+          { "CardNumber": "00002", "Spotify": "https://open.spotify.com/track/2222222222222222222222?si=x", "ArtistType": "group" },
+          { "CardNumber": "00003", "Spotify": "spotify:track:3333333333333333333333" },
+          { "CardNumber": "00005", "Spotify": "5555555555555555555555" },
+          { "CardNumber": "00006", "Spotify": "not-a-track" }
+        ]
+      }
+    },
+    {
+      "sku": "aaaa0006",
+      "gameset_data": { "cards": [{ "CardNumber": "00001", "Spotify": "9999999999999999999999" }] }
+    }
+  ]
+}
