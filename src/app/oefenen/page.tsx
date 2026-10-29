@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { loadCandidates } from "@/lib/practice/progress";
+import { SESSION_SIZE } from "@/lib/practice/scoring";
 import { findActiveSessionId } from "@/lib/practice/session";
 import { createClient } from "@/lib/supabase/server";
 import { startPractice } from "./actions";
@@ -11,6 +13,7 @@ export const metadata = { title: "Oefenen · Jaartal" };
 
 const problems: Record<string, string> = {
   geen_nummers: "Er zijn geen speelbare nummers in deze edities.",
+  geen_zwakke: "Je hebt nu geen zwakke nummers.",
   starten: "De oefenronde kon niet starten. Probeer het nog eens.",
 };
 
@@ -22,7 +25,7 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/oefenen">["se
   const activeId = playerId ? await findActiveSessionId(supabase, playerId) : null;
   if (activeId) redirect(`/oefenen/${activeId}`);
 
-  const [{ data: editions, error }, { count: allCount, error: countError }] = await Promise.all([
+  const [{ data: editions, error }, { count: allCount, error: countError }, weakSongs] = await Promise.all([
     supabase
       .from("edition_song_counts")
       .select("id, name, song_count")
@@ -30,6 +33,7 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/oefenen">["se
       .order("name")
       .returns<EditionOption[]>(),
     supabase.from("playable_songs").select("id", { count: "exact", head: true }),
+    loadCandidates(supabase, [], true),
   ]);
   if (error) throw error;
   if (countError) throw countError;
@@ -38,17 +42,30 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/oefenen">["se
   const problem = typeof fout === "string" ? problems[fout] : undefined;
 
   return (
-    <form action={startPractice} className={styles.setup}>
-      {problem ? (
-        <p className={styles.problem} role="alert">
-          {problem}
+    <>
+      <form action={startPractice} className={styles.setup}>
+        {problem ? (
+          <p className={styles.problem} role="alert">
+            {problem}
+          </p>
+        ) : null}
+        <EditionPicker editions={editions} allCount={allCount ?? 0} />
+        <button type="submit" className={styles.cta} disabled={!allCount}>
+          Start oefenen
+        </button>
+      </form>
+      <form action={startPractice} className={styles.weak}>
+        <input type="hidden" name="zwak" value="1" />
+        <button type="submit" className={styles.secondary} disabled={weakSongs.length === 0}>
+          Oefen mijn zwakke nummers
+        </button>
+        <p className={styles.hint}>
+          {weakSongs.length === 0
+            ? "Nog geen zwakke nummers. Nummers die je mist, komen hier vanzelf."
+            : `${Math.min(weakSongs.length, SESSION_SIZE)} nummers uit doos 1 en 2, uit alle edities.`}
         </p>
-      ) : null}
-      <EditionPicker editions={editions} allCount={allCount ?? 0} />
-      <button type="submit" className={styles.cta} disabled={!allCount}>
-        Start oefenen
-      </button>
-    </form>
+      </form>
+    </>
   );
 }
 

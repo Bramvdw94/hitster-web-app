@@ -1,8 +1,17 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { boxMove, KNOWN_BOX } from "@/lib/practice/leitner";
+import { loadCandidates } from "@/lib/practice/progress";
 import { summarise } from "@/lib/practice/scoring";
-import { cardYearsOf, finishSession, loadSession, trackIdOf, type SessionState } from "@/lib/practice/session";
+import {
+  cardYearsOf,
+  finishSession,
+  loadSession,
+  titlesOf,
+  trackIdOf,
+  type SessionState,
+} from "@/lib/practice/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { canCorrectYears } from "@/lib/year-correction/actions";
@@ -20,7 +29,15 @@ function formatYearsOff(value: number): string {
 
 async function Summary({ state }: { state: SessionState }) {
   const supabase = await createClient();
-  const cardYears = await cardYearsOf(supabase, state.session.song_ids);
+  const [cardYears, titles, candidates] = await Promise.all([
+    cardYearsOf(supabase, state.session.song_ids),
+    titlesOf(supabase, state.session.song_ids),
+    loadCandidates(supabase, state.session.edition_ids),
+  ]);
+  const moves = state.attempts
+    .map((a) => ({ ...a, move: boxMove(a.box_before, a.box_after), title: titles.get(a.song_id) ?? "" }))
+    .filter((a) => a.move !== "same");
+  const known = candidates.filter((c) => c.box === KNOWN_BOX).length;
   const summary = summarise(
     state.attempts
       .filter((a) => cardYears.has(a.song_id))
@@ -59,8 +76,36 @@ async function Summary({ state }: { state: SessionState }) {
         </ul>
       </section>
 
+      <section>
+        <h2 className={styles.section}>Dozen</h2>
+        <p className={styles.hint}>
+          {known} van {candidates.length} gekend
+          {state.session.weak_only || state.session.edition_ids.length === 0 ? " in alle edities" : " in deze edities"}.
+        </p>
+        {moves.length > 0 ? (
+          <ul className={styles.moves}>
+            {moves.map((m) => (
+              <li key={m.song_id} className={styles.move}>
+                <span
+                  className={m.move === "up" ? styles.good : styles.wrong}
+                  role="img"
+                  aria-label={m.move === "up" ? "omhoog" : "omlaag"}
+                >
+                  {m.move === "up" ? "▲" : "▼"}
+                </span>
+                <span className={styles.moveTitle}>{m.title}</span>
+                <span className={styles.moveBox}>doos {m.box_after}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.hint}>Geen nummer is van doos gewisseld.</p>
+        )}
+      </section>
+
       <div className={styles.actions}>
         <form action={startPractice}>
+          {state.session.weak_only ? <input type="hidden" name="zwak" value="1" /> : null}
           {state.session.edition_ids.map((id) => (
             <input key={id} type="hidden" name="edition" value={id} />
           ))}
