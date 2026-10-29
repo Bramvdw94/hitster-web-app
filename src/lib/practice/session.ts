@@ -7,6 +7,7 @@ export type PracticeSession = {
   player_id: string;
   session_number: number;
   edition_ids: string[];
+  weak_only: boolean;
   song_ids: string[];
   status: "active" | "finished";
 };
@@ -15,6 +16,8 @@ export type SessionAttempt = {
   song_id: string;
   year_diff: number | null;
   points: number;
+  box_before: number | null;
+  box_after: number | null;
 };
 
 export type SessionState = {
@@ -29,7 +32,7 @@ export type SessionState = {
 export async function loadSession(supabase: SupabaseClient, sessionId: string): Promise<SessionState | null> {
   const { data: session, error } = await supabase
     .from("practice_sessions")
-    .select("id, player_id, session_number, edition_ids, song_ids, status")
+    .select("id, player_id, session_number, edition_ids, weak_only, song_ids, status")
     .eq("id", sessionId)
     .maybeSingle<PracticeSession>();
   if (error) throw error;
@@ -37,7 +40,7 @@ export async function loadSession(supabase: SupabaseClient, sessionId: string): 
 
   const { data: attempts, error: attemptsError } = await supabase
     .from("attempts")
-    .select("song_id, year_diff, points")
+    .select("song_id, year_diff, points, box_before, box_after")
     .eq("practice_session_id", sessionId)
     .returns<SessionAttempt[]>();
   if (attemptsError) throw attemptsError;
@@ -126,6 +129,18 @@ export async function cardYearsOf(supabase: SupabaseClient, songIds: string[]): 
     .returns<{ song_id: string; card_year: number | null }[]>();
   if (error) throw error;
   return new Map(data.filter((r) => r.card_year !== null).map((r) => [r.song_id, r.card_year!]));
+}
+
+// Song titles, for the summary's box moves.
+export async function titlesOf(supabase: SupabaseClient, songIds: string[]): Promise<Map<string, string>> {
+  if (songIds.length === 0) return new Map();
+  const { data, error } = await supabase
+    .from("songs")
+    .select("id, title")
+    .in("id", songIds)
+    .returns<{ id: string; title: string }[]>();
+  if (error) throw error;
+  return new Map(data.map((r) => [r.id, r.title]));
 }
 
 // Marks a session finished. Takes the admin client: players can't write sessions themselves.

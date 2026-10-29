@@ -399,3 +399,40 @@
   border-radius: 999px;
   background: var(--accent);
 }
+
+/* Box moves on the summary */
+
+.moves {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  list-style: none;
+}
+
+.move {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.moveTitle {
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.moveBox {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Weak songs */
+
+.weak {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
