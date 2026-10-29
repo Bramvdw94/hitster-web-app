@@ -8,6 +8,7 @@ Settled with Bram on 2026-10-29 in [Set up the Vercel, Supabase and Spotify proj
 |---|---|---|---|
 | Supabase | `jaartal` (ref `vijpefspdqpgpffwoxaj`) | `eu-central-1` (Frankfurt), free plan | One database for production and previews |
 | Vercel | `jaartal` (team `bram-s-projects13`) | functions in `fra1` (Frankfurt) | Framework Next.js; not yet linked to the repo |
+| Domain | `jaartal.elbra.nl` | TransIP DNS | `CNAME jaartal → 287747f47deec3fb.vercel-dns-017.com.` |
 | Spotify | Bram's dev app from #9 | developer.spotify.com | Development mode, at most 5 allowlisted users |
 
 ## Stack inside the repo
@@ -31,8 +32,8 @@ Secrets are pasted by Bram in the dashboards and never go through chat or the re
 ## Login redirects
 
 - Spotify redirects to Supabase: `https://vijpefspdqpgpffwoxaj.supabase.co/auth/v1/callback`.
-- Supabase site URL: `https://jaartal.vercel.app`.
-- Supabase redirect allowlist: `https://jaartal.vercel.app/**`, `https://*-bram-s-projects13.vercel.app/**` (previews) and `http://localhost:3000/**`.
+- Supabase site URL: `https://jaartal.elbra.nl`.
+- Supabase redirect allowlist: `https://jaartal.elbra.nl/**`, `https://*-bram-s-projects13.vercel.app/**` (previews) and `http://localhost:3000/**`.
 - Scopes: `streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state`.
 
 ## Left for the first build ticket
