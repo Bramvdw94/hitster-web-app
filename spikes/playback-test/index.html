@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jaartal afspeeltest</title>
+<style>
+  :root { --bg:#14123a; --card:#1f1c52; --text:#f4f1ff; --muted:#a9a4d6; --accent:#ff7a1a; --ok:#3ddc97; --bad:#ff5c7a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  main { max-width:520px; margin:0 auto; padding:20px 16px 48px; }
+  h1 { font-size:26px; margin:0 0 4px; letter-spacing:.5px; }
+  h2 { font-size:17px; margin:0 0 10px; }
+  p { margin:0 0 10px; color:var(--muted); }
+  section { background:var(--card); border-radius:14px; padding:16px; margin:14px 0; }
+  label { display:block; font-size:14px; color:var(--muted); margin-bottom:6px; }
+  input, select { width:100%; padding:12px; border-radius:10px; border:1px solid #3a3680; background:#14123a; color:var(--text); font-size:16px; }
+  button { width:100%; padding:14px; margin-top:10px; border:0; border-radius:12px; background:var(--accent); color:#1a0f00; font-weight:700; font-size:16px; }
+  button.secondary { background:#3a3680; color:var(--text); }
+  button:disabled { opacity:.45; }
+  .row { display:flex; gap:8px; } .row > * { flex:1; }
+  .status { font-weight:600; } .ok { color:var(--ok); } .bad { color:var(--bad); }
+  #track { display:flex; gap:12px; align-items:center; margin-top:10px; }
+  #track img { width:64px; height:64px; border-radius:8px; }
+  pre { white-space:pre-wrap; word-break:break-word; font-size:12px; background:#0d0b28; padding:10px; border-radius:10px; max-height:260px; overflow:auto; color:var(--muted); }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Jaartal afspeeltest</h1>
+  <p>Test of Spotify muziek kan afspelen in deze browser, of alleen via de Spotify-app.</p>
+
+  <section id="login-box">
+    <h2>1. Inloggen</h2>
+    <label for="client-id">Client ID van je Spotify-app</label>
+    <input id="client-id" autocomplete="off" spellcheck="false" placeholder="32 tekens, uit het Spotify-dashboard">
+    <p style="margin-top:8px">Redirect URI die in je Spotify-app moet staan: <b id="redirect-uri"></b></p>
+    <button id="login">Inloggen met Spotify</button>
+  </section>
+
+  <section id="app" class="hidden">
+    <h2>2. Nummer</h2>
+    <p id="who"></p>
+    <div class="row">
+      <input id="query" value="Het is een nacht Guus Meeuwis">
+    </div>
+    <button class="secondary" id="search">Zoek nummer</button>
+    <div id="track"></div>
+  </section>
+
+  <section id="route-a" class="hidden">
+    <h2>3. Route A: afspelen in deze browser</h2>
+    <p>Speler: <span id="sdk-status" class="status">laden…</span></p>
+    <button id="play-browser" disabled>Speel hier af</button>
+    <div class="row"><button class="secondary" id="pause-browser">Pauze</button><button class="secondary" id="resume-browser">Verder</button></div>
+  </section>
+
+  <section id="route-b" class="hidden">
+    <h2>4. Route B: afspelen via de Spotify-app</h2>
+    <p>Open eerst de Spotify-app op je telefoon en speel kort iets af, dan verschijnt hij in de lijst.</p>
+    <button class="secondary" id="devices">Zoek apparaten</button>
+    <select id="device-list" style="margin-top:10px"></select>
+    <button id="play-device" disabled>Speel af op dit apparaat</button>
+  </section>
+
+  <section id="result" class="hidden">
+    <h2>5. Resultaat</h2>
+    <p>Wat hoorde je? Kopieer het logboek en plak het in de chat.</p>
+    <button class="secondary" id="copy">Kopieer logboek</button>
+    <pre id="log"></pre>
+  </section>
+</main>
+
+<script>
+const SCOPES = 'streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state';
+const REDIRECT_URI = location.origin + location.pathname;
+const $ = id => document.getElementById(id);
+const store = {
+  get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  del: k => { try { localStorage.removeItem(k); } catch {} },
+};
+let token = null, trackUri = null, player = null, browserDeviceId = null;
+
+const lines = [];
+function log(msg) {
+  const line = new Date().toLocaleTimeString('nl-NL') + '  ' + msg;
+  lines.push(line);
+  $('log').textContent = lines.join('\n');
+}
+
+$('redirect-uri').textContent = REDIRECT_URI;
+$('client-id').value = new URLSearchParams(location.search).get('client_id') || store.get('clientId') || '';
+
+// PKCE helpers
+function randomString(n) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from(crypto.getRandomValues(new Uint8Array(n)), x => chars[x % chars.length]).join('');
+}
+async function challenge(verifier) {
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  return btoa(String.fromCharCode(...new Uint8Array(hash))).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+$('login').onclick = async () => {
+  const clientId = $('client-id').value.trim();
+  if (!clientId) return alert('Vul eerst je Client ID in.');
+  store.set('clientId', clientId);
+  const verifier = randomString(64);
+  store.set('verifier', verifier);
+  const params = new URLSearchParams({
+    client_id: clientId, response_type: 'code', redirect_uri: REDIRECT_URI, scope: SCOPES,
+    code_challenge_method: 'S256', code_challenge: await challenge(verifier),
+  });
+  location.href = 'https://accounts.spotify.com/authorize?' + params;
+};
+
+async function api(path, opts = {}) {
+  const res = await fetch('https://api.spotify.com/v1' + path, {
+    ...opts, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', ...(opts.headers || {}) },
+  });
+  if (res.status === 204) return null;
+  const body = await res.text();
+  if (!res.ok) throw new Error(res.status + ' ' + body);
+  return body ? JSON.parse(body) : null;
+}
+
+async function handleRedirect() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('error')) { log('Login geweigerd: ' + params.get('error')); return; }
+  const code = params.get('code');
+  if (!code) return;
+  history.replaceState(null, '', REDIRECT_URI);
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: store.get('clientId'), grant_type: 'authorization_code', code,
+      redirect_uri: REDIRECT_URI, code_verifier: store.get('verifier'),
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) { log('Token ophalen mislukt: ' + JSON.stringify(data)); return; }
+  token = data.access_token;
+  store.del('verifier');
+}
+
+async function start() {
+  ['result'].forEach(id => $(id).classList.remove('hidden'));
+  log('Browser: ' + navigator.userAgent);
+  try { await handleRedirect(); } catch (e) { log('Fout bij inloggen: ' + e.message); }
+  if (!token) return;
+  ['app', 'route-a', 'route-b'].forEach(id => $(id).classList.remove('hidden'));
+  $('login-box').classList.add('hidden');
+  try {
+    const me = await api('/me');
+    $('who').textContent = 'Ingelogd als ' + (me.display_name || me.id) + ' (' + me.product + ')';
+    log('Ingelogd: ' + (me.display_name || me.id) + ', abonnement: ' + me.product);
+  } catch (e) {
+    log('Profiel ophalen mislukt: ' + e.message);
+    if (String(e.message).startsWith('403')) log('Tip: staat je e-mailadres in User Management van je Spotify-app?');
+  }
+  await searchTrack();
+  loadSdk();
+}
+
+async function searchTrack() {
+  try {
+    const q = encodeURIComponent($('query').value);
+    const data = await api('/search?type=track&limit=1&market=from_token&q=' + q);
+    const t = data.tracks.items[0];
+    if (!t) { log('Geen nummer gevonden.'); return; }
+    trackUri = t.uri;
+    $('track').innerHTML = '';
+    const img = document.createElement('img'); img.src = t.album.images.at(-1)?.url || ''; img.alt = '';
+    const txt = document.createElement('div'); txt.textContent = t.name + ' · ' + t.artists.map(a => a.name).join(', ') + ' (' + t.album.release_date.slice(0, 4) + ')';
+    $('track').append(img, txt);
+    log('Nummer: ' + t.name + ' (' + t.uri + ')');
+  } catch (e) { log('Zoeken mislukt: ' + e.message); }
+}
+$('search').onclick = searchTrack;
+
+// Route A: Web Playback SDK
+function setSdkStatus(text, cls) { $('sdk-status').textContent = text; $('sdk-status').className = 'status ' + (cls || ''); }
+function loadSdk() {
+  window.onSpotifyWebPlaybackSDKReady = () => {
+    log('SDK geladen');
+    player = new Spotify.Player({ name: 'Jaartal afspeeltest', getOAuthToken: cb => cb(token), volume: 0.8 });
+    player.addListener('ready', ({ device_id }) => {
+      browserDeviceId = device_id;
+      setSdkStatus('klaar', 'ok'); $('play-browser').disabled = false;
+      log('SDK klaar, apparaat-id ' + device_id);
+    });
+    player.addListener('not_ready', () => { setSdkStatus('offline', 'bad'); log('SDK niet meer klaar'); });
+    ['initialization_error', 'authentication_error', 'account_error', 'playback_error', 'autoplay_failed'].forEach(ev =>
+      player.addListener(ev, e => { setSdkStatus(ev, 'bad'); log('SDK ' + ev + ': ' + (e && e.message || '')); }));
+    player.addListener('player_state_changed', s => {
+      if (s) log('SDK status: ' + (s.paused ? 'gepauzeerd' : 'speelt') + ' op ' + Math.round(s.position / 1000) + 's');
+    });
+    player.connect().then(ok => log('SDK connect: ' + ok));
+  };
+  const s = document.createElement('script');
+  s.src = 'https://sdk.scdn.co/spotify-player.js';
+  s.onerror = () => { setSdkStatus('script niet geladen', 'bad'); log('SDK-script kon niet laden'); };
+  document.body.appendChild(s);
+}
+
+$('play-browser').onclick = async () => {
+  if (!trackUri) return alert('Zoek eerst een nummer.');
+  try {
+    await player.activateElement(); // must run inside the tap for mobile autoplay rules
+    await api('/me/player/play?device_id=' + browserDeviceId, { method: 'PUT', body: JSON.stringify({ uris: [trackUri] }) });
+    log('Route A: afspeelopdracht gestuurd naar de browser');
+  } catch (e) { log('Route A mislukt: ' + e.message); }
+};
+$('pause-browser').onclick = () => player && player.pause().then(() => log('Route A: pauze'));
+$('resume-browser').onclick = () => player && player.resume().then(() => log('Route A: verder'));
+
+// Route B: Spotify Connect
+$('devices').onclick = async () => {
+  try {
+    const { devices } = await api('/me/player/devices');
+    const sel = $('device-list'); sel.innerHTML = '';
+    devices.forEach(d => {
+      const o = document.createElement('option'); o.value = d.id; o.textContent = d.name + ' (' + d.type + ')' + (d.is_active ? ' · actief' : '');
+      sel.appendChild(o);
+    });
+    $('play-device').disabled = devices.length === 0;
+    log('Apparaten: ' + (devices.map(d => d.name + ' [' + d.type + ']').join(', ') || 'geen'));
+  } catch (e) { log('Apparaten ophalen mislukt: ' + e.message); }
+};
+$('play-device').onclick = async () => {
+  if (!trackUri) return alert('Zoek eerst een nummer.');
+  try {
+    await api('/me/player/play?device_id=' + $('device-list').value, { method: 'PUT', body: JSON.stringify({ uris: [trackUri] }) });
+    log('Route B: afspeelopdracht gestuurd naar ' + $('device-list').selectedOptions[0].textContent);
+  } catch (e) { log('Route B mislukt: ' + e.message); }
+};
+
+$('copy').onclick = async () => {
+  try { await navigator.clipboard.writeText(lines.join('\n')); $('copy').textContent = 'Gekopieerd'; }
+  catch { alert('Kopiëren lukt niet; maak een screenshot van het logboek.'); }
+};
+
+start();
+</script>
+</body>
+</html>
