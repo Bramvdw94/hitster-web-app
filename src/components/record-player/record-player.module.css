@@ -1,0 +1,204 @@
+.player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Record and tonearm, after the Platenspeler prototype in #6. */
+.deck {
+  position: relative;
+  width: min(72vw, 280px);
+  aspect-ratio: 1;
+}
+
+.vinyl {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, #0b0816 0 2px, #1b1630 2.5px 3.5px);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px #2c2550;
+  animation: spin 2.4s linear infinite;
+  animation-play-state: paused;
+}
+
+.spinning .vinyl {
+  animation-play-state: running;
+}
+
+/* The light sheen stays put while the grooves turn. */
+.deck::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(130deg, transparent 38%, rgba(255, 255, 255, 0.12) 50%, transparent 62%);
+  pointer-events: none;
+}
+
+.label {
+  position: absolute;
+  inset: 32%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0b0816 0 6%, var(--accent) 6.5% 100%);
+  color: #2a0d00;
+}
+
+.label span {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 8vw, 40px);
+  line-height: 1;
+}
+
+.arm {
+  position: absolute;
+  top: -6%;
+  right: -4%;
+  z-index: 1;
+  width: 14%;
+  height: 62%;
+  transform: rotate(8deg);
+  transform-origin: 50% 8%;
+  transition: transform 0.5s ease;
+}
+
+.armDown .arm {
+  transform: rotate(30deg);
+}
+
+.arm::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 44%;
+  width: 12%;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(#ddd, #888);
+}
+
+.arm::after {
+  content: "";
+  position: absolute;
+  bottom: -4%;
+  left: 20%;
+  width: 60%;
+  height: 14%;
+  border-radius: 4px;
+  background: #cfcfcf;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vinyl {
+    animation: none;
+  }
+
+  .arm {
+    transition: none;
+  }
+}
+
+.status {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.controls button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  font: inherit;
+  cursor: pointer;
+}
+
+.controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.playPause {
+  width: 64px;
+  height: 64px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 22px;
+}
+
+.restart {
+  width: 44px;
+  height: 44px;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 20px;
+}
+
+.time {
+  width: 54px;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.problem {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--wrong);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  text-align: center;
+}
+
+.problemActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.retry,
+.openSpotify {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+}
+
+.retry {
+  border: 0;
+  background: var(--accent);
+  color: #2a0d00;
+}
+
+.openSpotify {
+  border: 2px solid var(--spotify);
+  color: var(--spotify);
+}
