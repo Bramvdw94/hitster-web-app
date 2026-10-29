@@ -45,8 +45,9 @@ Added in [Scaffold the Jaartal app and its deploy pipeline](https://github.com/B
 | `CI` | every PR and push to `main` | `npm run lint`, `npm run typecheck`, `npm test` |
 | `Migrations` | push to `main` that touches `supabase/migrations/`, or by hand | `supabase db push` against `vijpefspdqpgpffwoxaj`; never runs for a PR |
 | `Keep-alive` | daily at 06:17 UTC, or by hand | reads one row of `profiles` with the publishable key, so the free project never pauses |
+| `Import catalogue` | by hand, from `main` (inputs: editions, dry run) | runs `scripts/import-catalogue.ts`; the report per edition is in the run summary |
 
-GitHub Actions secrets (set by Bram): `SUPABASE_ACCESS_TOKEN` (a Supabase personal access token) and `SUPABASE_DB_PASSWORD` (the database password, reset once in Supabase).
+GitHub Actions secrets (set by Bram): `SUPABASE_ACCESS_TOKEN` (a Supabase personal access token) and `SUPABASE_DB_PASSWORD` (the database password, reset once in Supabase). The catalogue import also needs `SUPABASE_SECRET_KEY`, `SPOTIFY_CLIENT_ID` and `SPOTIFY_CLIENT_SECRET`, the same values as in Vercel.
 
 ## Still open
 

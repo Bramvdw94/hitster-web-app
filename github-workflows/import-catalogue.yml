@@ -1,0 +1,39 @@
+name: Import catalogue
+
+# Loads editions, cards and songs into Supabase from the snapshots in data/sources/.
+# By hand only. Safe to repeat: it writes only what changed and never touches year_overrides.
+on:
+  workflow_dispatch:
+    inputs:
+      editions:
+        description: "SKUs, comma-separated, or all"
+        default: all
+        required: true
+      dry_run:
+        description: "Only report, write nothing"
+        type: boolean
+        default: false
+
+concurrency:
+  group: import-catalogue
+  cancel-in-progress: false
+
+jobs:
+  import:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: https://vijpefspdqpgpffwoxaj.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
+      EDITIONS: ${{ inputs.editions }}
+      DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run import:catalogue -- --editions "$EDITIONS" $DRY_RUN
