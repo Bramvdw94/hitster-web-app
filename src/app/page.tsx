@@ -75,6 +75,15 @@ export default function Home() {
               </Suspense>
             </Link>
           </li>
+          <li>
+            <Link href="/voortgang" className={styles.entry}>
+              <span className={styles.entryText}>
+                <span className={styles.entryTitle}>Mijn voortgang</span>
+                <span className={styles.entryHint}>Hoeveel nummers je kent en waar je zwak bent.</span>
+              </span>
+              <span className={styles.go}>Bekijk</span>
+            </Link>
+          </li>
         </ul>
       </nav>
 

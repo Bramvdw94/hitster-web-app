@@ -1,0 +1,334 @@
+/* Mijn voortgang (#30): one phone-width column of panels, summary first, detail below. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.placeholder {
+  min-height: 320px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.back {
+  align-self: flex-start;
+  padding: 4px 0;
+  color: var(--lilac);
+  font-weight: 700;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+}
+
+.panel {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+}
+
+.label {
+  margin-bottom: 10px;
+  color: var(--lilac);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.foot {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.page > .foot {
+  text-align: center;
+}
+
+/* Gekend */
+
+.countdown {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 2px 12px 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.06em;
+}
+
+.big {
+  font-family: var(--font-display);
+  font-size: 64px;
+  line-height: 0.9;
+}
+
+.big small {
+  color: var(--muted);
+  font-size: 28px;
+}
+
+.boxes {
+  display: flex;
+  height: 14px;
+  margin: 14px 0 8px;
+  overflow: hidden;
+  border-radius: 7px;
+  background: var(--line);
+}
+
+.boxes span {
+  display: block;
+  height: 100%;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  list-style: none;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 5px;
+  border-radius: 2px;
+}
+
+/* Totals */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.tile {
+  padding: 2px 10px;
+  border-left: 1px solid var(--line);
+}
+
+.tile:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.tile b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.tile span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+/* Per decade */
+
+.rows {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 52px 1fr 44px;
+  align-items: center;
+  gap: 2px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.key {
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+
+.bar {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: var(--line);
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+}
+
+.good {
+  background: var(--good);
+}
+
+.close {
+  background: var(--close);
+}
+
+.wrong {
+  background: var(--wrong);
+}
+
+.value {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+}
+
+.flag {
+  grid-column: 2 / -1;
+  color: var(--wrong);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Per edition and hardest songs */
+
+.list {
+  display: grid;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.item:first-child,
+.song:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.name {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.count {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.thinBar {
+  grid-column: 1 / -1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.thinBar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.song {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--line);
+}
+
+.cover {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background: var(--line);
+  object-fit: cover;
+}
+
+.songText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.artist {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.miss {
+  color: var(--wrong);
+  font-size: 11px;
+}
+
+.year {
+  color: var(--lilac);
+  font-family: var(--font-display);
+  font-size: 26px;
+}
+
+.cta {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px 0 9px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  cursor: pointer;
+}
+
+.cta:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.emptyTitle {
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1;
+}
