@@ -18,6 +18,12 @@ export function nextBox(box: number, yearDiff: number | null): number {
   return MIN_BOX;
 }
 
+// A solo game placement has no year to judge, so the placement itself counts: right moves the
+// song up a box, wrong sends it back to box 1 (#27).
+export function nextBoxAfterPlacement(box: number, correct: boolean): number {
+  return correct ? Math.min(box + 1, KNOWN_BOX) : MIN_BOX;
+}
+
 // Practice sessions until the song is due again: box 1 every session, then 2, 4, 8, 16.
 export function dueInterval(box: number): number {
   return 2 ** (box - 1);

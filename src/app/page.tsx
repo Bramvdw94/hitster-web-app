@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { findActiveGame } from "@/lib/game/games";
 import { findActiveSessionId } from "@/lib/practice/session";
 import { createClient } from "@/lib/supabase/server";
 import { logOut } from "./actions";
@@ -37,6 +38,15 @@ async function PracticeBadge() {
   return <span className={activeId ? styles.resume : styles.go}>{activeId ? "Ga verder" : "Start"}</span>;
 }
 
+// "Ga verder" when a game is still running.
+async function GameBadge() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const playerId = data?.claims.sub;
+  const running = playerId ? await findActiveGame(supabase, playerId) : null;
+  return <span className={running ? styles.resume : styles.go}>{running ? "Ga verder" : "Start"}</span>;
+}
+
 export default function Home() {
   return (
     <main className={styles.page}>
@@ -56,13 +66,15 @@ export default function Home() {
         <p className={styles.label}>Wat wil je doen?</p>
         <ul className={styles.menu}>
           <li>
-            <button type="button" className={styles.entry} disabled>
+            <Link href="/spel" className={styles.entry}>
               <span className={styles.entryText}>
                 <span className={styles.entryTitle}>Spel</span>
-                <span className={styles.entryHint}>Speel Hitster zoals aan tafel, solo of samen.</span>
+                <span className={styles.entryHint}>Bouw een tijdlijn van 10 kaarten, zoals aan tafel.</span>
               </span>
-              <span className={styles.soon}>Binnenkort</span>
-            </button>
+              <Suspense fallback={<span className={styles.go}>Start</span>}>
+                <GameBadge />
+              </Suspense>
+            </Link>
           </li>
           <li>
             <Link href="/oefenen" className={styles.entry}>

@@ -37,21 +37,27 @@ insert into public.attempts (player_id, song_id, practice_session_id, guessed_ye
   ('00000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-000000000001',
    '30000000-0000-0000-0000-000000000002', 1985, 1, 3);
 
--- 55 solo game answers in the 80s for A: the 5 oldest close, of the newest 50 only 20 close.
-insert into public.attempts (player_id, song_id, guessed_year, year_diff, points, answered_at)
+-- 55 solo game placements in the 80s for A, one per game: the 5 oldest right, of the newest 50
+-- only 20 right.
+insert into public.games (id, owner_id, mode, variant, status, state, finished_at)
+select ('40000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid, '00000000-0000-0000-0000-00000000000a',
+  'solo', 'original', 'abandoned', '{}', '2026-10-01 00:00Z'::timestamptz + i * interval '1 minute'
+from generate_series(1, 55) i;
+insert into public.attempts (player_id, song_id, game_id, placed_correctly, points, answered_at)
 select '00000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-000000000001',
-  case when i <= 5 or i > 35 then 1984 else 1990 end,
-  case when i <= 5 or i > 35 then 0 else 6 end,
+  ('40000000-0000-0000-0000-' || lpad(i::text, 12, '0'))::uuid,
+  i <= 5 or i > 35,
   0, '2026-10-01 00:00Z'::timestamptz + i * interval '1 minute'
 from generate_series(1, 55) i;
 
 -- A "Ken ik niet" in the 70s.
-insert into public.attempts (player_id, song_id, dont_know, points) values
-  ('00000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-000000000003', true, 0);
+insert into public.attempts (player_id, song_id, practice_session_id, dont_know, points) values
+  ('00000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-000000000003',
+   '30000000-0000-0000-0000-000000000003', true, 0);
 
 -- B's answers: all close, in every decade.
-insert into public.attempts (player_id, song_id, guessed_year, year_diff, points, artist_correct)
-select '00000000-0000-0000-0000-00000000000b', s, 2000, 0, 7, true
+insert into public.attempts (player_id, song_id, practice_session_id, guessed_year, year_diff, points, artist_correct)
+select '00000000-0000-0000-0000-00000000000b', s, '30000000-0000-0000-0000-000000000004', 2000, 0, 7, true
 from unnest('{20000000-0000-0000-0000-000000000001,20000000-0000-0000-0000-000000000002,20000000-0000-0000-0000-000000000003}'::uuid[]) s;
 
 insert into public.song_progress (player_id, song_id, box, last_seen_session, due_at_session) values
@@ -90,7 +96,7 @@ begin
 
   s := public.get_my_stats('2026-11-03 12:00Z');
   select x into d from jsonb_array_elements(s->'decades') x where (x->>'decade')::int = 1980;
-  -- The newest 50 of 57: the 2 practice answers, 28 game answers off by 6 and 20 close ones.
+  -- The newest 50 of 57: the 2 practice answers, 28 wrong placements and 20 right ones.
   if (d->>'answered')::int <> 50 then
     raise exception 'decade window: expected 50 answers, got %', d;
   end if;

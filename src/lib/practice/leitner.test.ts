@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { boxBefore, boxMove, dueInterval, KNOWN_BOX, nextBox } from "./leitner";
+import { boxBefore, boxMove, dueInterval, KNOWN_BOX, nextBox, nextBoxAfterPlacement } from "./leitner";
 
 describe("nextBox", () => {
   it("moves up a box when the year is spot on or 1 off", () => {
@@ -46,5 +46,16 @@ describe("boxMove", () => {
     expect(boxMove(4, 1)).toBe("down");
     expect(boxMove(1, 1)).toBe("same");
     expect(boxMove(null, null)).toBe("same");
+  });
+});
+
+describe("nextBoxAfterPlacement", () => {
+  it("moves a right placement up a box, up to box 5", () => {
+    expect(nextBoxAfterPlacement(1, true)).toBe(2);
+    expect(nextBoxAfterPlacement(5, true)).toBe(5);
+  });
+
+  it("sends a wrong placement back to box 1", () => {
+    expect(nextBoxAfterPlacement(4, false)).toBe(1);
   });
 });

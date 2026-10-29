@@ -1,13 +1,16 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { boxBefore, dueInterval, nextBox } from "./leitner";
+import { boxBefore, dueInterval, nextBox, nextBoxAfterPlacement } from "./leitner";
 import type { Candidate, DecadeStat } from "./mix";
 
 export type AttemptInput = {
   playerId: string;
   songId: string;
-  // Null for a solo game attempt (#27).
+  // Exactly one of the two: a practice answer or a solo game placement.
   practiceSessionId: string | null;
+  gameId?: string | null;
+  // Set for a game placement, which moves the box by the placement instead of the year.
+  placedCorrectly?: boolean;
   guessedYear: number | null;
   yearDiff: number | null;
   artistInput: string | null;
@@ -31,7 +34,10 @@ export async function recordAttempt(admin: SupabaseClient, input: AttemptInput):
   if (readError) throw readError;
 
   const before = boxBefore(progress?.box);
-  const after = nextBox(before, input.yearDiff);
+  const after =
+    input.placedCorrectly === undefined
+      ? nextBox(before, input.yearDiff)
+      : nextBoxAfterPlacement(before, input.placedCorrectly);
   const { error } = await admin.rpc("record_attempt", {
     p_player_id: input.playerId,
     p_song_id: input.songId,
@@ -45,6 +51,8 @@ export async function recordAttempt(admin: SupabaseClient, input: AttemptInput):
     p_box_before: before,
     p_box_after: after,
     p_due_interval: dueInterval(after),
+    p_game_id: input.gameId ?? null,
+    p_placed_correctly: input.placedCorrectly ?? null,
   });
   if (error) throw error;
   return { boxBefore: before, boxAfter: after };
