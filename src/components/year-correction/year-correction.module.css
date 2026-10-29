@@ -1,0 +1,143 @@
+.link {
+  align-self: flex-start;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: var(--lilac);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.saved {
+  color: var(--good);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 480px;
+  margin: auto auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.sheet::backdrop {
+  background: rgba(10, 6, 30, 0.7);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.current {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.current b {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field label {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 2px solid var(--line);
+  border-radius: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+}
+
+.field input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.problem {
+  padding: 12px 14px;
+  border: 1px solid var(--wrong);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.save {
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #2a0d00;
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.save:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.cancel {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}

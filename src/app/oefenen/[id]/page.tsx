@@ -5,6 +5,7 @@ import { summarise } from "@/lib/practice/scoring";
 import { cardYearsOf, finishSession, loadSession, trackIdOf, type SessionState } from "@/lib/practice/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { canCorrectYears } from "@/lib/year-correction/actions";
 import { startPractice } from "../actions";
 import { PracticeTurn } from "./practice-turn";
 import styles from "../oefenen.module.css";
@@ -99,6 +100,7 @@ async function Session({ params }: { params: PageProps<"/oefenen/[id]">["params"
       songCount={state.session.song_ids.length}
       points={state.points}
       trackId={await trackIdOf(supabase, state.session.song_ids[state.current])}
+      canCorrectYears={await canCorrectYears()}
     />
   );
 }
