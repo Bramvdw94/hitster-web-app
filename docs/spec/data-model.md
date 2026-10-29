@@ -32,6 +32,9 @@ Settled with Bram on 2026-10-29 in [Define the data model and song import](https
 
 - Resuming after a reload: an `active` practice session plus its `attempts` is enough. A game keeps everything in `games.state`.
 - Pass-and-play opponents are names inside `games.state`, not accounts, and are kept only while the game runs. They create no `attempts`, since only solo feeds weak songs (#5).
+- Players never write `practice_sessions` or `attempts` themselves. `start_practice_session(edition_ids)` deals a session (or returns the running one: at most one `active` session per player) and counts it in `practice_session_count`; the answer server action scores on the server and writes the attempt with the secret key, so points can't be faked.
+- `attempts.year_diff` is the guessed year minus the card year, so negative means too early. `guessed_year` and `year_diff` are null for "Ken ik niet".
+- The view `edition_song_counts` gives the number of playable songs per edition for the edition list.
 - The stats screen (still open on the map) reads from `attempts` and `song_progress`, so no counter tables are needed.
 
 ## Spotify tokens (server only)

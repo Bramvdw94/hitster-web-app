@@ -118,6 +118,27 @@
   font-size: 14px;
 }
 
+.go,
+.resume {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.go {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.resume {
+  background: var(--accent);
+  color: #2a0d00;
+}
+
 .soon {
   flex: none;
   padding: 4px 10px;
@@ -172,17 +193,4 @@
 .logout:focus-visible {
   border-color: var(--lilac);
   color: var(--text);
-}
-
-.testPlay {
-  display: block;
-  padding: 16px;
-  border-radius: var(--radius-md);
-  background: var(--accent);
-  box-shadow: 0 10px 30px rgba(255, 122, 61, 0.35);
-  color: #2a0d00;
-  font-family: var(--font-display);
-  font-size: 26px;
-  letter-spacing: 0.06em;
-  text-align: center;
 }

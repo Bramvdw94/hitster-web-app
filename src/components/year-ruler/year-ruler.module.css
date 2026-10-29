@@ -1,0 +1,102 @@
+.ruler {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.readout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.year {
+  min-width: 3.2ch;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 96px;
+  font-variant-numeric: tabular-nums;
+  line-height: 0.9;
+  text-align: center;
+}
+
+.step {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tape {
+  position: relative;
+  height: 56px;
+}
+
+/* Small ticks per year, tall ticks per decade. */
+.tape::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 18px;
+  background:
+    repeating-linear-gradient(90deg, var(--muted) 0 1px, transparent 1px calc(100% / 75)),
+    repeating-linear-gradient(90deg, var(--text) 0 2px, transparent 2px calc(100% / 7.5));
+  background-size: 100% 40%, 100% 100%;
+  background-repeat: no-repeat;
+  background-position: bottom, bottom;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.tape input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.tape input:focus-visible ~ .labels {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.needle {
+  position: absolute;
+  top: -6px;
+  bottom: 14px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  pointer-events: none;
+}
+
+.labels {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1;
+  pointer-events: none;
+}

@@ -1,19 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { findActiveSessionId } from "@/lib/practice/session";
 import { createClient } from "@/lib/supabase/server";
 import { logOut } from "./actions";
 import styles from "./page.module.css";
 
-const entries = [
-  {
-    title: "Spel",
-    hint: "Speel Hitster zoals aan tafel, solo of samen.",
-  },
-  {
-    title: "Oefenen",
-    hint: "Raad jaar en artiest, je zwakke nummers komen vaker terug.",
-  },
-];
 
 async function Player() {
   const supabase = await createClient();
@@ -37,6 +28,15 @@ async function Player() {
   );
 }
 
+// "Ga verder" when a practice session is still running, so reopening the app continues it.
+async function PracticeBadge() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const playerId = data?.claims.sub;
+  const activeId = playerId ? await findActiveSessionId(supabase, playerId) : null;
+  return <span className={activeId ? styles.resume : styles.go}>{activeId ? "Ga verder" : "Start"}</span>;
+}
+
 export default function Home() {
   return (
     <main className={styles.page}>
@@ -55,24 +55,28 @@ export default function Home() {
       <nav aria-label="Kies wat je wilt doen">
         <p className={styles.label}>Wat wil je doen?</p>
         <ul className={styles.menu}>
-          {entries.map((entry) => (
-            <li key={entry.title}>
-              <button type="button" className={styles.entry} disabled>
-                <span className={styles.entryText}>
-                  <span className={styles.entryTitle}>{entry.title}</span>
-                  <span className={styles.entryHint}>{entry.hint}</span>
-                </span>
-                <span className={styles.soon}>Binnenkort</span>
-              </button>
-            </li>
-          ))}
+          <li>
+            <button type="button" className={styles.entry} disabled>
+              <span className={styles.entryText}>
+                <span className={styles.entryTitle}>Spel</span>
+                <span className={styles.entryHint}>Speel Hitster zoals aan tafel, solo of samen.</span>
+              </span>
+              <span className={styles.soon}>Binnenkort</span>
+            </button>
+          </li>
+          <li>
+            <Link href="/oefenen" className={styles.entry}>
+              <span className={styles.entryText}>
+                <span className={styles.entryTitle}>Oefenen</span>
+                <span className={styles.entryHint}>Raad jaar en artiest van 15 nummers.</span>
+              </span>
+              <Suspense fallback={<span className={styles.go}>Start</span>}>
+                <PracticeBadge />
+              </Suspense>
+            </Link>
+          </li>
         </ul>
       </nav>
-
-      {/* Temporary, until a mode uses the record player (#22). */}
-      <Link href="/afspelen" className={styles.testPlay}>
-        Speel een nummer
-      </Link>
 
       <p className={styles.footer}>Privé oefenapp, niet van Hitster of Jumbo.</p>
     </main>
