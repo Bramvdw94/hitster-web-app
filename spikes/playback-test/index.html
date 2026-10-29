@@ -64,8 +64,14 @@
     <button id="play-device" disabled>Speel af op dit apparaat</button>
   </section>
 
+  <section id="route-c" class="hidden">
+    <h2>5. Route C: open het nummer in de Spotify-app</h2>
+    <p>Springt naar de Spotify-app met dit nummer. Kom daarna terug naar deze pagina voor het logboek.</p>
+    <button id="open-app">Open in Spotify</button>
+  </section>
+
   <section id="result" class="hidden">
-    <h2>5. Resultaat</h2>
+    <h2>6. Resultaat</h2>
     <p>Wat hoorde je? Kopieer het logboek en plak het in de chat.</p>
     <button class="secondary" id="copy">Kopieer logboek</button>
     <pre id="log"></pre>
@@ -150,7 +156,7 @@ async function start() {
   log('Browser: ' + navigator.userAgent);
   try { await handleRedirect(); } catch (e) { log('Fout bij inloggen: ' + e.message); }
   if (!token) return;
-  ['app', 'route-a', 'route-b'].forEach(id => $(id).classList.remove('hidden'));
+  ['app', 'route-a', 'route-b', 'route-c'].forEach(id => $(id).classList.remove('hidden'));
   $('login-box').classList.add('hidden');
   try {
     const me = await api('/me');
@@ -229,12 +235,30 @@ $('devices').onclick = async () => {
     log('Apparaten: ' + (devices.map(d => d.name + ' [' + d.type + ']').join(', ') || 'geen'));
   } catch (e) { log('Apparaten ophalen mislukt: ' + e.message); }
 };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 $('play-device').onclick = async () => {
   if (!trackUri) return alert('Zoek eerst een nummer.');
+  const id = $('device-list').value, name = $('device-list').selectedOptions[0].textContent;
+  // Wake the device first: a backgrounded Spotify app often answers 404 to a direct play.
   try {
-    await api('/me/player/play?device_id=' + $('device-list').value, { method: 'PUT', body: JSON.stringify({ uris: [trackUri] }) });
-    log('Route B: afspeelopdracht gestuurd naar ' + $('device-list').selectedOptions[0].textContent);
-  } catch (e) { log('Route B mislukt: ' + e.message); }
+    await api('/me/player', { method: 'PUT', body: JSON.stringify({ device_ids: [id], play: false }) });
+    log('Route B: afspelen overgezet naar ' + name);
+  } catch (e) { log('Route B overzetten mislukt: ' + e.message); }
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await sleep(800 * attempt);
+    try {
+      await api('/me/player/play?device_id=' + id, { method: 'PUT', body: JSON.stringify({ uris: [trackUri] }) });
+      log('Route B: afspeelopdracht gestuurd (poging ' + attempt + ')');
+      return;
+    } catch (e) { log('Route B poging ' + attempt + ' mislukt: ' + e.message); }
+  }
+};
+
+// Route C: hand the track to the Spotify app with a link
+$('open-app').onclick = () => {
+  if (!trackUri) return alert('Zoek eerst een nummer.');
+  log('Route C: nummer geopend in de Spotify-app');
+  location.href = 'https://open.spotify.com/track/' + trackUri.split(':').pop();
 };
 
 $('copy').onclick = async () => {
