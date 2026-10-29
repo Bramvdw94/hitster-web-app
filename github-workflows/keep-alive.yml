@@ -1,0 +1,21 @@
+name: Keep-alive
+
+# A free Supabase project pauses after a week without use. One small read a day prevents that.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    env:
+      # Public values: the same URL and publishable key ship to every browser.
+      SUPABASE_URL: https://vijpefspdqpgpffwoxaj.supabase.co
+      SUPABASE_PUBLISHABLE_KEY: sb_publishable_xPRvl7V6Si6OLbJILSdGBw_rfu23vkA
+    steps:
+      - name: Read one row
+        run: |
+          curl --fail-with-body --silent --show-error \
+            "$SUPABASE_URL/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY"
