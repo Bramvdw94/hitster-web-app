@@ -22,6 +22,7 @@ export async function startPractice(formData: FormData) {
 }
 
 export type Reveal = {
+  songId: string;
   title: string;
   artist: string;
   coverUrl: string | null;
@@ -94,6 +95,7 @@ export async function answerSong(
     return {
       ok: true,
       reveal: {
+        songId,
         title: song.title,
         artist: song.artists.map((a) => a.name).join(", "),
         coverUrl: song.coverUrl,

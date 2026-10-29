@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { RecordPlayer } from "@/components/record-player/record-player";
 import { DEFAULT_YEAR } from "@/components/year-ruler/ruler";
 import { YearRuler } from "@/components/year-ruler/year-ruler";
+import { YearCorrection } from "@/components/year-correction/year-correction";
 import { usePlayback } from "@/lib/playback/use-playback";
 import { answerSong, type Reveal } from "../actions";
 import styles from "../oefenen.module.css";
@@ -15,6 +16,8 @@ type Props = {
   songCount: number;
   points: number;
   trackId: string;
+  // Bram sees "Jaar klopt niet" on the answer screen.
+  canCorrectYears: boolean;
 };
 
 const problemText = {
@@ -116,6 +119,9 @@ export function PracticeTurn(props: Props) {
             {reveal.uncertainYear ? <p className={styles.uncertain}>jaar onzeker</p> : null}
             <p className={styles.sleeveTitle}>{reveal.title}</p>
             <p className={styles.sleeveArtist}>{reveal.artist}</p>
+            {props.canCorrectYears ? (
+              <YearCorrection key={reveal.songId} songId={reveal.songId} cardYear={reveal.cardYear} />
+            ) : null}
           </div>
         </section>
 
