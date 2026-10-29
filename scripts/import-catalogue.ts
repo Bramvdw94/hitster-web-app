@@ -16,7 +16,7 @@ import { fetchTrack, getAppToken } from "./catalogue/spotify";
 
 const DEFAULT_SUPABASE_URL = "https://vijpefspdqpgpffwoxaj.supabase.co";
 // Stay well under Spotify's rolling rate limit; 429s are retried anyway.
-const SPOTIFY_DELAY_MS = 150;
+const SPOTIFY_DELAY_MS = 300;
 const MUSICBRAINZ_DELAY_MS = 1100;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -61,6 +61,7 @@ async function main() {
     const incoming: IncomingCard[] = [];
     for (const card of cards) {
       incoming.push({ ...card, track: await fetchTrack(card.spotifyTrackId, token) });
+      if (incoming.length % 50 === 0) console.log(`  ${incoming.length} of ${cards.length}`);
       await sleep(SPOTIFY_DELAY_MS);
     }
 
