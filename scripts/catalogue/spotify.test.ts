@@ -17,7 +17,7 @@ describe("fetchTrack", () => {
 
     expect(fetchFn).toHaveBeenCalledWith(
       "https://api.spotify.com/v1/tracks/2222222222222222222222?market=NL",
-      { headers: { Authorization: "Bearer token" } },
+      expect.objectContaining({ headers: { Authorization: "Bearer token" } }),
     );
     expect(result).toEqual({ coverUrl: "large", artists: [{ id: "a1", name: "Queen" }], playableNl: true });
   });
@@ -31,6 +31,23 @@ describe("fetchTrack", () => {
 
     expect(fetchFn).toHaveBeenCalledTimes(2);
     expect(result?.playableNl).toBe(false);
+  });
+
+  it("stops on a long rate limit instead of sleeping through it", async () => {
+    const fetchFn = async () => json(429, {}, { "retry-after": "3600" });
+    await expect(fetchTrack("x", "t", { fetchFn })).rejects.toThrow("retry after 60 minutes");
+  });
+
+  it("retries when a request hangs or fails", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockRejectedValueOnce(new DOMException("timed out", "TimeoutError"))
+      .mockResolvedValueOnce(json(200, track));
+    vi.useFakeTimers();
+    const result = fetchTrack("x", "t", { fetchFn });
+    await vi.runAllTimersAsync();
+    vi.useRealTimers();
+    expect((await result)?.playableNl).toBe(true);
   });
 
   it("returns null for an unknown track and throws on other errors", async () => {

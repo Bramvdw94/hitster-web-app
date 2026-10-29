@@ -30,16 +30,29 @@ type TrackResponse = {
   artists?: { id: string | null; name: string }[];
 };
 
-// Null when Spotify does not know the track. Retries on 429 after Retry-After and on 5xx.
+// A rate limit longer than this aborts the run instead of sleeping through it.
+export const MAX_RETRY_AFTER_SECONDS = 120;
+const REQUEST_TIMEOUT_MS = 15_000;
+
+// Null when Spotify does not know the track. Retries on 429 after Retry-After, on 5xx and on a timeout.
 export async function fetchTrack(
   trackId: string,
   token: string,
   { fetchFn = fetch, maxAttempts = 5 }: { fetchFn?: Fetch; maxAttempts?: number } = {},
 ): Promise<SpotifyTrack | null> {
   for (let attempt = 1; ; attempt++) {
-    const response = await fetchFn(`https://api.spotify.com/v1/tracks/${trackId}?market=NL`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    let response: Response;
+    try {
+      response = await fetchFn(`https://api.spotify.com/v1/tracks/${trackId}?market=NL`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+    } catch (error) {
+      if (attempt >= maxAttempts) throw new Error(`Spotify GET /tracks/${trackId} failed: ${String(error)}`);
+      console.log(`Spotify did not answer for ${trackId}, retrying`);
+      await sleep(1000 * 2 ** attempt);
+      continue;
+    }
 
     if (response.ok) {
       const track = (await response.json()) as TrackResponse;
@@ -58,6 +71,13 @@ export async function fetchTrack(
       throw new Error(`Spotify GET /tracks/${trackId} failed: ${response.status} ${await response.text()}`);
     }
     const retryAfter = Number(response.headers.get("retry-after"));
-    await sleep(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** attempt);
+    if (retryAfter > MAX_RETRY_AFTER_SECONDS) {
+      throw new Error(
+        `Spotify rate limit: retry after ${Math.ceil(retryAfter / 60)} minutes. Nothing was written; run the import again later.`,
+      );
+    }
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** attempt;
+    console.log(`Spotify answered ${response.status} for ${trackId}, waiting ${Math.round(waitMs / 1000)}s`);
+    await sleep(waitMs);
   }
 }
