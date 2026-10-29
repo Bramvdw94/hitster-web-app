@@ -135,3 +135,41 @@
   font-size: 13px;
   text-align: center;
 }
+
+.player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 40px;
+}
+
+.playerName {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playerName strong {
+  color: var(--text);
+}
+
+.logout {
+  flex: none;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.logout:hover,
+.logout:focus-visible {
+  border-color: var(--lilac);
+  color: var(--text);
+}
