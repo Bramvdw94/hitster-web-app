@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { logOut } from "./actions";
@@ -67,6 +68,11 @@ export default function Home() {
           ))}
         </ul>
       </nav>
+
+      {/* Temporary, until a mode uses the record player (#22). */}
+      <Link href="/afspelen" className={styles.testPlay}>
+        Speel een nummer
+      </Link>
 
       <p className={styles.footer}>Privé oefenapp, niet van Hitster of Jumbo.</p>
     </main>
