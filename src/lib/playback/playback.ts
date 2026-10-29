@@ -8,7 +8,8 @@ export type PlaybackProblem =
   | "afspelen" // a song did not start
   | "browser" // this browser cannot run the SDK
   | "geen_premium"
-  | "opnieuw_inloggen";
+  | "opnieuw_inloggen"
+  | "te_veel_verzoeken"; // Spotify rate-limits the app (429)
 
 export type PlaybackState = {
   status: PlaybackStatus;
@@ -84,6 +85,8 @@ export const problemMessages: Record<PlaybackProblem, string> = {
   browser: "Deze browser kan Spotify niet afspelen. Open het nummer in de Spotify-app.",
   geen_premium: "Afspelen in de browser kan alleen met Spotify Premium. Open het nummer in de Spotify-app.",
   opnieuw_inloggen: "Je Spotify-login is verlopen. Log uit en log opnieuw in met Spotify.",
+  te_veel_verzoeken:
+    "Spotify blokkeert de app even omdat er te veel verzoeken waren. Probeer het later opnieuw, of open het nummer in Spotify.",
 };
 
 // Where the song is now, counting on from the last measurement while it plays.

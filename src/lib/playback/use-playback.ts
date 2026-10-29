@@ -96,6 +96,7 @@ async function startTrackOnDevice(deviceId: string, trackId: string): Promise<vo
     const body = (await response.json().catch(() => ({}))) as { error?: { reason?: string } };
     throw new PlaybackProblemError(body.error?.reason === "PREMIUM_REQUIRED" ? "geen_premium" : "afspelen");
   }
+  if (response.status === 429) throw new PlaybackProblemError("te_veel_verzoeken");
   // 404 means Spotify no longer knows this browser as a device.
   throw new PlaybackProblemError(response.status === 404 ? "verbinding" : "afspelen");
 }
