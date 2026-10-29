@@ -86,11 +86,12 @@ export function parseCsv(text: string): string[][] {
   return rows.filter((r) => r.some((f) => f.trim() !== ""));
 }
 
-export function parseSongseeker(csv: string): YearRow[] {
+// A year list: the songseeker CSV, or a hitify snapshot written in the same shape (Card#, Artist, Title, Year).
+export function parseYearCsv(csv: string): YearRow[] {
   const [header, ...rows] = parseCsv(csv.replace(/^﻿/, ""));
   const col = (name: string) => {
     const index = header.findIndex((h) => h.trim().toLowerCase() === name);
-    if (index < 0) throw new Error(`songseeker CSV has no "${name}" column`);
+    if (index < 0) throw new Error(`Year list has no "${name}" column`);
     return index;
   };
   const card = col("card#");

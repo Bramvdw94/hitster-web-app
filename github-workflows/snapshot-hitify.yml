@@ -1,0 +1,42 @@
+name: Snapshot hitify
+
+# Saves hitify.app's card lists (card number, artist, title, year) of the editions in
+# scripts/catalogue/editions.ts to data/sources/hitify/ and commits them to main.
+# By hand only, rarely: hitify allows personal, non-commercial use and asks not to be overloaded.
+# Run "Import catalogue" afterwards to load the years.
+on:
+  workflow_dispatch:
+    inputs:
+      editions:
+        description: "SKUs, comma-separated, or empty for all hitify editions"
+        default: ""
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      EDITIONS: ${{ inputs.editions }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run snapshot:hitify -- ${EDITIONS:+--editions "$EDITIONS"}
+      - name: Commit the snapshot
+        run: |
+          git add data/sources/hitify
+          if git diff --cached --quiet; then
+            echo "hitify has not changed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Snapshot hitify card lists ($(date -u +%F))"
+          git push

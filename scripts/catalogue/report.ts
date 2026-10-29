@@ -7,7 +7,9 @@ export type EditionReport = {
   expectedCards: number;
   cards: number;
   withoutTrack: number[];
+  withoutYearRow: number[];
   withoutYear: number[];
+  musicbrainzYears: number[];
   uncertainYears: number[];
   notOnSpotify: number[];
   notPlayableNl: number[];
@@ -17,7 +19,7 @@ export type EditionReport = {
 export function buildReport(
   config: EditionConfig,
   incoming: IncomingCard[],
-  withoutTrack: number[],
+  join: { withoutTrack: number[]; withoutYearRow: number[] },
   changes: Changes,
 ): EditionReport {
   const numbers = (keep: (card: IncomingCard) => boolean) => incoming.filter(keep).map((c) => c.cardNumber);
@@ -26,8 +28,10 @@ export function buildReport(
     name: config.name,
     expectedCards: config.cardCount,
     cards: incoming.length,
-    withoutTrack,
+    withoutTrack: join.withoutTrack,
+    withoutYearRow: join.withoutYearRow,
     withoutYear: numbers((c) => c.cardYear === null),
+    musicbrainzYears: numbers((c) => c.yearSource === "musicbrainz"),
     uncertainYears: numbers((c) => c.yearStatus === "uncertain"),
     notOnSpotify: numbers((c) => c.track === null),
     notPlayableNl: numbers((c) => !c.track?.playableNl),
@@ -39,7 +43,9 @@ export function totalChanges(changes: Changes): number {
   return Object.values(changes).reduce((sum, n) => sum + n, 0);
 }
 
-const list = (cards: number[]) => (cards.length === 0 ? "0" : `${cards.length} (cards ${cards.join(", ")})`);
+// Card numbers only while the list stays readable: a hitify edition has hundreds of uncertain years.
+const list = (cards: number[]) =>
+  cards.length === 0 ? "0" : cards.length > 20 ? String(cards.length) : `${cards.length} (cards ${cards.join(", ")})`;
 
 export function formatReport(report: EditionReport, { dryRun = false } = {}): string {
   const c = report.changes;
@@ -53,8 +59,10 @@ export function formatReport(report: EditionReport, { dryRun = false } = {}): st
     `|---|---|`,
     `| Cards | ${report.cards} of ${report.expectedCards} |`,
     `| No Spotify track in Jumbo | ${list(report.withoutTrack)} |`,
+    `| Jumbo cards missing from the year list | ${list(report.withoutYearRow)} |`,
     `| Songs without a year | ${list(report.withoutYear)} |`,
     `| Uncertain years | ${list(report.uncertainYears)} |`,
+    `| Years from MusicBrainz | ${list(report.musicbrainzYears)} |`,
     `| Not found on Spotify | ${list(report.notOnSpotify)} |`,
     `| Not playable in NL | ${list(report.notPlayableNl)} |`,
     `| ${dryRun ? "Would change" : "Changed"} | ${changed} |`,
