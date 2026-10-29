@@ -1,0 +1,28 @@
+name: Migrations
+
+# The only way schema changes reach the database: from main, never from a PR or preview.
+on:
+  push:
+    branches: [main]
+    paths: ["supabase/migrations/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: migrations
+  cancel-in-progress: false
+
+jobs:
+  push:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_PROJECT_REF: vijpefspdqpgpffwoxaj
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.122.0
+      - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+      - run: supabase db push
