@@ -20,8 +20,8 @@ export async function createClient() {
             cookieStore.set(name, value, options);
           }
         } catch {
-          // Server Components can't set cookies. The proxy refreshes the
-          // session instead (added with Spotify login in #19).
+          // Server Components can't set cookies. src/proxy.ts refreshes the
+          // session instead.
         }
       },
     },
