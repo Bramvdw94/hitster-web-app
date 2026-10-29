@@ -2,21 +2,26 @@
 // See docs/spec/data-model.md. Run by the "Import catalogue" GitHub Action, or locally:
 //
 //   SUPABASE_SECRET_KEY=… SPOTIFY_CLIENT_ID=… SPOTIFY_CLIENT_SECRET=… \
-//     npm run import:catalogue -- --editions aaaa0001 [--dry-run]
+//     npm run import:catalogue -- --editions aaaa0001 [--dry-run] [--recheck-spotify]
+//
+// Tracks an earlier run checked in the last 30 days are not looked up on Spotify again,
+// unless --recheck-spotify is given.
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
-import { applyPlan, loadExisting } from "./catalogue/db";
+import { applyPlan, loadExisting, loadStoredTracks } from "./catalogue/db";
 import { JUMBO_FILE, selectEditions } from "./catalogue/editions";
 import { joinEdition } from "./catalogue/join";
 import { lookupArtistKind } from "./catalogue/musicbrainz";
 import { artistsNeedingKind, type IncomingCard, planImport } from "./catalogue/plan";
 import { buildReport, formatReport } from "./catalogue/report";
 import { parseJumbo, parseSongseeker, type ArtistKind } from "./catalogue/sources";
-import { fetchTrack, getAppToken } from "./catalogue/spotify";
+import { fetchTrack, getAppToken, type SpotifyTrack } from "./catalogue/spotify";
+import { splitByFreshness } from "./catalogue/stored";
 
 const DEFAULT_SUPABASE_URL = "https://vijpefspdqpgpffwoxaj.supabase.co";
-// Stay well under Spotify's rolling rate limit; 429s are retried anyway.
-const SPOTIFY_DELAY_MS = 300;
+// A development-mode app gets a small, unpublished rolling budget, and going over it locks the app
+// out for a day. Bram asked to go very slowly: one call every 3 seconds (about 20 a minute).
+const SPOTIFY_DELAY_MS = 3000;
 const MUSICBRAINZ_DELAY_MS = 1100;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -35,6 +40,7 @@ function requireEnv(...names: string[]): string[] {
 async function main() {
   const editions = selectEditions(argument("editions") ?? "all");
   const dryRun = process.argv.includes("--dry-run");
+  const recheck = process.argv.includes("--recheck-spotify");
   const [secretKey, clientId, clientSecret] = requireEnv(
     "SUPABASE_SECRET_KEY",
     "SPOTIFY_CLIENT_ID",
@@ -49,7 +55,7 @@ async function main() {
   const db = createClient(process.env.SUPABASE_URL || DEFAULT_SUPABASE_URL, secretKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-  const token = await getAppToken(clientId, clientSecret);
+  let token: string | undefined;
 
   for (const config of editions) {
     console.log(`\n${config.name} (${config.sku}): joining sources`);
@@ -57,13 +63,17 @@ async function main() {
     const { cards, withoutTrack } = joinEdition(parseJumbo(jumbo, config.sku), years, config.years.source);
 
     // Look everything up first, so a Spotify failure aborts before anything is written.
-    console.log(`Looking up ${cards.length} tracks on Spotify`);
-    const incoming: IncomingCard[] = [];
-    for (const card of cards) {
-      incoming.push({ ...card, track: await fetchTrack(card.spotifyTrackId, token) });
-      if (incoming.length % 50 === 0) console.log(`  ${incoming.length} of ${cards.length}`);
+    const stored = await loadStoredTracks(db, cards.map((c) => c.spotifyTrackId));
+    const { reused, toLookUp } = splitByFreshness(cards, stored, { recheck });
+    console.log(`Looking up ${toLookUp.length} tracks on Spotify (${reused.size} checked recently)`);
+    const tracks = new Map<string, SpotifyTrack | null>(reused);
+    for (const id of toLookUp) {
+      token ??= await getAppToken(clientId, clientSecret);
+      tracks.set(id, await fetchTrack(id, token));
+      if (tracks.size % 50 === 0) console.log(`  ${tracks.size - reused.size} of ${toLookUp.length}`);
       await sleep(SPOTIFY_DELAY_MS);
     }
+    const incoming: IncomingCard[] = cards.map((card) => ({ ...card, track: tracks.get(card.spotifyTrackId)! }));
 
     const existing = await loadExisting(db, config.sku, incoming);
 
@@ -77,7 +87,7 @@ async function main() {
     }
 
     const plan = planImport(config, existing, incoming, kinds);
-    if (!dryRun) await applyPlan(db, plan);
+    if (!dryRun) await applyPlan(db, plan, toLookUp);
 
     const report = formatReport(buildReport(config, incoming, withoutTrack, plan.changes), { dryRun });
     console.log(`\n${report}`);

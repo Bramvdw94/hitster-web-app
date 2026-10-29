@@ -48,7 +48,7 @@ Settled with Bram on 2026-10-29 in [Define the data model and song import](https
 
 1. A script in the repo (`scripts/import-catalogue.ts`), run by hand from a GitHub Action (`workflow_dispatch`) or locally. There is no admin page in the app.
 2. Sources: Jumbo `gameset_database.json` (card to Spotify track), the songseeker CSV (Original NL), hitify (other editions), and MusicBrainz first-release as a fallback. The raw sources are snapshotted in the repo, so the app never fetches them live.
-3. One `GET /tracks/{id}?market=NL` per track for the cover and NL playability.
+3. One `GET /tracks/{id}?market=NL` per track for the cover and NL playability, at most one every 3 seconds. A development-mode Spotify app that goes over its small burst budget is locked out for about a day, so a run reuses what an earlier run stored and only looks up tracks that are new or were checked more than 30 days ago (`checked_at`). `--recheck-spotify` looks everything up again.
 4. Upsert on (`sku`, `card_number`) and `spotify_track_id`. Songs are deduplicated on the Spotify track ID. `year_overrides` is never touched.
 5. A run looks up every track before it writes anything, then writes only rows that changed, so a second run reports no changes. `--dry-run` reports without writing.
 6. Each run prints a report per edition: cards, songs without a year, uncertain years and songs not playable in NL.

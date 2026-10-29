@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ArtistRow, CardRow, EditionRow, Existing, IncomingCard, Plan, SongArtistRow, SongRow } from "./plan";
+import type { StoredTrack } from "./stored";
 
 // PostgREST puts `in` filters in the URL, so long ID lists go in chunks.
 const CHUNK = 100;
@@ -60,19 +61,49 @@ export async function loadExisting(db: SupabaseClient, sku: string, incoming: In
   return { edition, songs, artists, songArtists, cards };
 }
 
+// Cover, NL playability and credits as an earlier run stored them, per Spotify track ID.
+export async function loadStoredTracks(db: SupabaseClient, trackIds: string[]): Promise<Map<string, StoredTrack>> {
+  type Row = { id: string; spotify_track_id: string; cover_url: string | null; playable_nl: boolean; checked_at: string | null };
+  const songs = await selectIn<Row>(db, "songs", "id, spotify_track_id, cover_url, playable_nl, checked_at", "spotify_track_id", trackIds);
+  const credits = await selectIn<SongArtistRow>(db, "song_artists", "song_id, artist_id, position", "song_id", songs.map((s) => s.id));
+  const artists = await selectIn<Pick<ArtistRow, "id" | "spotify_artist_id" | "name">>(
+    db,
+    "artists",
+    "id, spotify_artist_id, name",
+    "id",
+    credits.map((c) => c.artist_id),
+  );
+  const artistById = new Map(artists.map((a) => [a.id, a]));
+
+  return new Map(
+    songs.map((song) => {
+      const credited = credits
+        .filter((c) => c.song_id === song.id)
+        .sort((a, b) => a.position - b.position)
+        .flatMap((c) => {
+          const artist = artistById.get(c.artist_id);
+          return artist?.spotify_artist_id ? [{ id: artist.spotify_artist_id, name: artist.name }] : [];
+        });
+      const track = { coverUrl: song.cover_url, artists: credited, playableNl: song.playable_nl };
+      return [song.spotify_track_id, { checkedAt: song.checked_at, track }];
+    }),
+  );
+}
+
 async function check(step: string, request: PromiseLike<{ error: { message: string } | null }>) {
   const { error } = await request;
   if (error) throw new Error(`${step}: ${error.message}`);
 }
 
-// Writes only what the plan lists. year_overrides is never touched.
-export async function applyPlan(db: SupabaseClient, plan: Plan, now = new Date().toISOString()) {
+// Writes only what the plan lists, plus checked_at for the tracks looked up on Spotify.
+// year_overrides is never touched.
+export async function applyPlan(db: SupabaseClient, plan: Plan, lookedUp: string[], now = new Date().toISOString()) {
   if (plan.edition) await check("Writing edition", db.from("editions").upsert(plan.edition, { onConflict: "sku" }));
 
   for (const part of chunks(plan.artists)) {
     await check("Writing artists", db.from("artists").upsert(part, { onConflict: "id" }));
   }
-  for (const part of chunks(plan.songs.map((s) => ({ ...s, checked_at: now })))) {
+  for (const part of chunks(plan.songs)) {
     await check("Writing songs", db.from("songs").upsert(part, { onConflict: "spotify_track_id" }));
   }
   for (const part of chunks(plan.replaceArtistsOf)) {
@@ -83,6 +114,9 @@ export async function applyPlan(db: SupabaseClient, plan: Plan, now = new Date()
   }
   for (const part of chunks(plan.cards)) {
     await check("Writing cards", db.from("cards").upsert(part, { onConflict: "edition_id,card_number" }));
+  }
+  for (const part of chunks(lookedUp)) {
+    await check("Marking songs checked", db.from("songs").update({ checked_at: now }).in("spotify_track_id", part));
   }
   if (plan.removedCards.length > 0) {
     await check(

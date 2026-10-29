@@ -6,6 +6,7 @@ import { joinEdition } from "./join";
 import { artistsNeedingKind, type Existing, type IncomingCard, type Plan, planImport } from "./plan";
 import { buildReport, formatReport, totalChanges } from "./report";
 import { parseCsv, parseJumbo, parseSongseeker, spotifyTrackId } from "./sources";
+import { splitByFreshness } from "./stored";
 import type { SpotifyTrack } from "./spotify";
 
 const fixture = (name: string) => readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
@@ -207,5 +208,29 @@ describe("report", () => {
     expect(text).toContain("| Cards | 4 of 5 |");
     expect(text).toContain("| Not playable in NL | 2 (cards 3, 5) |");
     expect(text).toContain("| Changed | no changes |");
+  });
+});
+
+describe("splitByFreshness", () => {
+  const now = new Date("2026-10-29T12:00:00Z");
+  const track = { coverUrl: null, artists: [{ id: "queen", name: "Queen" }], playableNl: true };
+
+  it("reuses tracks checked recently and looks up the rest", () => {
+    const { incoming } = incomingCards();
+    const stored = new Map([
+      ["1111111111111111111111", { checkedAt: "2026-10-28T12:00:00Z", track }],
+      ["2222222222222222222222", { checkedAt: "2026-09-01T12:00:00Z", track }],
+      ["3333333333333333333333", { checkedAt: "2026-10-28T12:00:00Z", track: { ...track, artists: [] } }],
+    ]);
+    const { reused, toLookUp } = splitByFreshness(incoming, stored, { now });
+
+    expect([...reused.keys()]).toEqual(["1111111111111111111111"]);
+    expect(toLookUp).toEqual(["2222222222222222222222", "3333333333333333333333", "5555555555555555555555"]);
+  });
+
+  it("looks everything up again on request", () => {
+    const { incoming } = incomingCards();
+    const stored = new Map([["1111111111111111111111", { checkedAt: "2026-10-28T12:00:00Z", track }]]);
+    expect(splitByFreshness(incoming, stored, { now, recheck: true }).toLookUp).toHaveLength(4);
   });
 });
