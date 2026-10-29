@@ -1,0 +1,315 @@
+Card#,Artist,Title,Year
+1,"George Baker, George Baker Selection",Una Paloma Blanca,1975
+2,Tracy Chapman,Fast Car,1988
+3,Yazoo,Don't Go,1982
+4,Sam Cooke,(What A) Wonderful World - Mono,1960
+5,Ed Sheeran,Bad Habits,2021
+6,"Shawn Mendes, Camila Cabello",Señorita,2019
+7,Kelly Clarkson,Because of You,2003
+8,R.E.M.,Everybody Hurts,1992
+9,Annie Lennox,Why,1992
+10,Boston,More Than a Feeling,1976
+11,Steppenwolf,Born To Be Wild,1968
+12,Vanilla Ice,Ice Ice Baby,1990
+13,Lionel Richie,Dancing On The Ceiling,1986
+14,Cyndi Lauper,True Colors,1986
+15,Dr. Alban,Sing Hallelujah!,1992
+16,Jason Derulo,Whatcha Say,2009
+17,Bruce Springsteen,Dancing In the Dark,1984
+18,Sinéad O'Connor,Nothing Compares 2 U,1990
+19,George Ezra,Green Green Grass,2022
+20,Peter Koelewijn en Zijn Rockets,Kom van dat dak af,1960
+21,Taylor Swift,Anti-Hero,2022
+22,Mabel,Don't Call Me Up,2019
+23,Anneke Gronloh,Brandend Zand,2009
+24,"Avicii, Sandro Cavazza",Without You (feat. Sandro Cavazza),2017
+25,Eros Ramazzotti,Più bella cosa,1996
+26,The Verve,Bitter Sweet Symphony - Remastered 2016,1997
+27,"Tiësto, Ava Max",The Motto,2021
+28,KC & The Sunshine Band,Give It Up,1982
+29,"Mark Ronson, Amy Winehouse",Valerie (feat. Amy Winehouse) - Version Revisited,2007
+30,Van McCoy,The Hustle - Original Mix,1975
+31,Gers Pardoel,Ik Neem Je Mee,2011
+32,The Supremes,You Can't Hurry Love,1966
+33,Diana Ross,Upside Down,1980
+34,Wim Sonneveld,Het Dorp,1965
+35,Creedence Clearwater Revival,Have You Ever Seen The Rain,1971
+36,Rick James,Super Freak,1981
+37,Rene Froger,Alles Kan Een Mens Gelukkig Maken,1989
+38,The Rolling Stones,Start Me Up - Remastered 2009,1981
+39,"Bill Medley, Jennifer Warnes","(I've Had) The Time of My Life - From ""Dirty Dancing"" Soundtrack",1987
+40,"Roxy Dekker, Ronnie Flex",Gaan We Weg?,2024
+41,Van Dik Hout,Stil In Mij,1994
+42,Simple Minds,Belfast Child - Remastered 2002,1989
+43,Daryl Hall & John Oates,Maneater,1982
+44,Bon Jovi,It's My Life,2000
+45,Tom Jones,Green Green Grass Of Home,1966
+46,Madonna,4 Minutes (feat. Justin Timberlake and Timbaland),2008
+47,Gerard Cox,1948 (Toen Was Geluk Heel Gewoon),1972
+48,Christina Aguilera,Genie In a Bottle,1999
+49,Kaoma,Lambada - Version 1989,1989
+50,Lady Gaga,Poker Face,2008
+51,Joseito Fernández,Guajira Guantanamera,1929
+52,Teddy Swims,Lose Control,2023
+53,Meghan Trainor,All About That Bass,2014
+54,Commodores,Easy,1977
+55,The Cats,Sure He's A Cat,1967
+56,Amy Macdonald,This Is The Life,2007
+57,Fluitsma & van Tijn,15 Miljoen Mensen,1996
+58,"Davina Michelle, Beste Zangers",Duurt Te Lang,2018
+59,Def Rhymz,Doekoe,1999
+60,The Weeknd,Blinding Lights,2019
+61,The Kinks,Lola,1970
+62,Boudewijn de Groot,Een Meisje Van Zestien,1965
+63,Patrick Hernandez,Born to Be Alive - The Original,1979
+64,Plastic Bertrand,Ca plane pour moi,1977
+65,Harry Styles,Adore You,2019
+66,Miley Cyrus,Wrecking Ball,2013
+67,Britney Spears,Oops!...I Did It Again,2000
+68,Genesis,No Son Of Mine,1991
+69,De Poema's,Mijn Houten Hart,1999
+70,Bloem,Even Aan Mijn Moeder Vragen,1980
+71,Niels Geusebroek,Take Your Time Girl (live at ruud de wild/538),2013
+72,John Legend,All of Me,2013
+73,Earth & Fire,Weekend,1979
+74,The Chordettes,Lollipop,1958
+75,Bronski Beat,Smalltown Boy,1984
+76,Enrico Caruso,"Rigoletto: ""La Donna E' Mobile""",1908
+77,"Libianca, Ayra Starr, Omah Lay",People (feat. Ayra Starr & Omah Lay),2023
+78,Corona,The Rhythm of the Night,1993
+79,Amii Stewart,Knock On Wood,1979
+80,Kool & The Gang,Celebration,1980
+81,The Beatles,Let It Be - Remastered 2009,1970
+82,Alicia Keys,No One,2007
+83,Glenn Miller,In the Mood - 2006 Remastered Version,1939
+84,Herman van Veen,Anne,1986
+85,GAYLE,abcdefu,2021
+86,Owl City,Fireflies,2009
+87,No Doubt,Don't Speak,1996
+88,"Jaap Reesema, Pommelien Thijs",Nu Wij Niet Meer Praten,2020
+89,Paul Elstak,Rainbow In The Sky - Radio Edit,1995
+90,Bill Haley & His Comets,(We're Gonna) Rock Around The Clock,1955
+91,Doe Maar,1 Nacht Alleen,1983
+92,2 Unlimited,No Limit,1993
+93,The Bangles,Manic Monday,1985
+94,Neil Diamond,Sweet Caroline,1969
+95,Stef Bos,Papa,1991
+96,"Shaggy, Rik Rok",It Wasn't Me,2000
+97,TLC,Waterfalls,1995
+98,"Robin Schulz, Alida",In Your Eyes (feat. Alida),2020
+99,Will Smith,Gettin' Jiggy Wit It,1998
+100,Neil Diamond,"Girl, You'll Be A Woman Soon",1967
+101,"Gotye, Kimbra",Somebody That I Used to Know,2011
+102,Prince,Purple Rain,1984
+103,"Bob Sinclar, Steve Edwards",World Hold on (Children of the Sky) [Radio Edit],2006
+104,Red Hot Chili Peppers,Under the Bridge,1991
+105,Harry Belafonte,Day-O (The Banana Boat Song),1956
+106,Sister Sledge,We Are Family - 1995 Remaster,1979
+107,Spice Girls,Stop,1997
+108,Chicago,If You Leave Me Now,1976
+109,Whitney Houston,I Wanna Dance with Somebody (Who Loves Me),1987
+110,Ritchie Valens,La Bamba,1958
+111,James Brown & The Famous Flames,I Got You (I Feel Good),1965
+112,Effe Serieus,Baila de Gasolina,2025
+113,"Joel Corry, MNEK",Head & Heart (feat. MNEK),2020
+114,Dorus,Twee Motten,1956
+115,"Anne-Marie, Shania Twain",UNHEALTHY (feat. Shania Twain),2023
+116,Teddy Scholten,Een Beetje,1959
+117,MIKA,"Relax, Take It Easy",2006
+118,"Icona Pop, Charli xcx",I Love It (feat. Charli XCX),2012
+119,Cliff Richard,Congratulations - 1998 Remaster,1968
+120,Nancy Sinatra,These Boots Are Made for Walkin',1966
+121,Snelle,Smoorverliefd,2020
+122,Lorde,Royals,2012
+123,The Archies,"Sugar, Sugar",1969
+124,Lukas Graham,7 Years,2015
+125,Chubby Checker,The Twist,1960
+126,"George Michael, Aretha Franklin",I Knew You Were Waiting (For Me),1986
+127,Las Ketchup,The Ketchup Song (Aserejé),2002
+128,Stevie Wonder,"Signed, Sealed, Delivered (I'm Yours)",1970
+129,"Nelly, Kelly Rowland",Dilemma (feat. Kelly Rowland),2002
+130,Gipsy Kings,Volare (Nel Blu di Pinto di Blu),1989
+131,"Herman Brood, Henny Vrienten",Als Je Wint,1983
+132,Enrique Iglesias,Do You Know? (The Ping Pong Song),2007
+133,Amy Winehouse,Rehab,2006
+134,Clouseau,Daar Gaat Ze,1990
+135,Wet Wet Wet,"Love Is All Around - From ""Four Weddings And A Funeral""",1994
+136,De Kast,In Nije Dei,1996
+137,Hans De Booij,Annabel,1983
+138,KATSEYE,Gabriela,2025
+139,Pearl Jam,Alive,1991
+140,Simply Red,Holding Back the Years - 2008 Remaster,1985
+141,Alicia Keys,Fallin',2001
+142,Andre Hazes,"Bloed, Zweet En Tranen",2002
+143,Anouk,Michel,1999
+144,Annie De Reuver,Kijk Eens In De Poppetjes Van Mijn Ogen,1952
+145,Sophie Ellis-Bextor,Murder On The Dancefloor,2001
+146,Jan & Dean,Surf City (Rerecorded),1963
+147,Chuck Berry,Johnny B. Goode,1958
+148,Lola Young,Messy,2024
+149,"HUNTR/X, EJAE, AUDREY NUNA, REI AMI, KPop Demon Hunters Cast",Golden,2025
+150,Suzan & Freek,Als Het Avond Is,2018
+151,FLEMMING,Amsterdam,2021
+152,"Beyoncé, JAY-Z",Crazy In Love (feat. JAY-Z),2003
+153,Black Eyed Peas,Where Is The Love?,2003
+154,Normaal,Oerend Hard,1977
+155,Boney M.,Daddy Cool,1976
+156,"Kris Kross Amsterdam, Sofía Reyes, Tinie Tempah",How You Samba,2023
+157,Fatboy Slim,Praise You,1998
+158,Tina Turner,The Best,1989
+159,Billy Joel,Piano Man,1973
+160,Mungo Jerry,In the Summertime,1970
+161,Golden Earring,Radar Love - Original Single Edit 1973,1973
+162,Ramses Shaffy,Laat Me,1978
+163,Rick Astley,Never Gonna Give You Up,1987
+164,Tears For Fears,Shout,1984
+165,T'Pau,China In Your Hand,1987
+166,The Monkees,I'm a Believer - 2006 Remaster,1966
+167,"P!nk, Nate Ruess",Just Give Me a Reason (feat. Nate Ruess),2012
+168,Nirvana,Smells Like Teen Spirit,1991
+169,Aqua,Barbie Girl,1997
+170,Portugal. The Man,Feel It Still,2017
+171,Pharrell Williams,Happy,2013
+172,Vaya Con Dios,Nah Neh Nah,1990
+173,The Trammps,Disco Inferno,1976
+174,Nielson,Sexy Als Ik Dans,2014
+175,Billy Swan,I Can Help,1974
+176,Dolly Parton,Jolene,1973
+177,Benson Boone,Beautiful Things,2024
+178,Daft Punk,One More Time - Radio Edit,2000
+179,Corinne Bailey Rae,Put Your Records On,2006
+180,Billie Eilish,bad guy,2019
+181,André Hazes Jr.,Leef,2015
+182,Lenny Kravitz,Fly Away,1998
+183,Bruno Mars,The Lazy Song,2010
+184,Tones And I,Dance Monkey,2019
+185,Snow,Informer,1992
+186,Ace of Base,All That She Wants,1992
+187,Duffy,Mercy,2008
+188,Outkast,Hey Ya!,2003
+189,Marvin Gaye,I Heard It Through The Grapevine,1968
+190,Betty Everett,It's In The Kiss (The Shoop Shoop Song),1964
+191,Chumbawamba,Tubthumping - Radio Edit,1997
+192,Haddaway,"What Is Love - 7"" Mix",1992
+193,"Lady Gaga, Bradley Cooper",Shallow,2018
+194,Drake,Toosie Slide,2020
+195,Jan Smit,Als De Morgen Is Gekomen,2006
+196,Alessia Cara,Scars To Your Beautiful,2015
+197,Eric Prydz,Call on Me - Radio Mix,2004
+198,Dua Lipa,Break My Heart,2020
+199,Laura Branigan,Self Control,1984
+200,The Champs,Tequila,1958
+201,Mark Morrison,Return of the Mack,1996
+202,Bryan Adams,Heaven,1983
+203,"Justin Bieber, Daniel Caesar, GIVĒON",Peaches (feat. Daniel Caesar & Giveon),2021
+204,Roxette,The Look,1988
+205,De Dijk,Mag Het Licht Uit,1987
+206,Olivia Rodrigo,drivers license,2021
+207,Elvis Presley,Can't Help Falling in Love,1961
+208,BLØF,Wat Zou Je Doen?,1995
+209,Faithless,God Is a DJ,1998
+210,Elvis Presley,Jailhouse Rock,1957
+211,Captain Jack,Captain Jack - Short Mix,1995
+212,The Cranberries,Zombie,1994
+213,Modjo,Lady - Hear Me Tonight,2000
+214,Katy Perry,Firework,2010
+215,John Mayer,Daughters,2003
+216,Guns N' Roses,Sweet Child O' Mine,1987
+217,Enya,Orinoco Flow,1988
+218,Natalie Imbruglia,Torn,1997
+219,Céline Dion,"My Heart Will Go On - Love Theme from ""Titanic""",1997
+220,The Four Seasons,"December, 1963 (Oh What a Night!)",1975
+221,The Waterboys,The Whole of the Moon - 2004 Remaster,1985
+222,Loreen,Euphoria,2012
+223,Corry Brokken,La Mamma (Zij Kwamen Overal Vandaan),1964
+224,Rednex,Cotton Eye Joe,1994
+225,50 Cent,In Da Club,2003
+226,Fleetwood Mac,Everywhere - 2017 Remaster,1987
+227,Roy Orbison,"Oh, Pretty Woman",1964
+228,Aretha Franklin,Respect,1967
+229,Lewis Capaldi,Someone You Loved,2018
+230,Little Eva,The Locomotion,1962
+231,Oasis,Wonderwall,1995
+232,"Maroon 5, Christina Aguilera","Moves Like Jagger - Studio Recording From ""The Voice"" Performance",2011
+233,TOTO,Africa,1982
+234,O-Zone,Dragostea din tei,2003
+235,The Human League,Don't You Want Me,1981
+236,Sia,Cheap Thrills,2016
+237,Anita Meyer,Why Tell Me Why,1981
+238,Carly Simon,You're So Vain,1972
+239,Jennifer Lopez,If You Had My Love,1999
+240,"Rob De Nijs, The Lords",Ritme Van De Regen,1963
+241,Culture Beat,Mr. Vain,1993
+242,DJ Top Gun,Duck Sauce - Barbra Streisand,2012
+243,The Police,Every Breath You Take,1983
+244,"JAY-Z, Linkin Park",Numb / Encore,2004
+245,Fats Domino,Ain't That A Shame,1955
+246,Train,"Hey, Soul Sister",2009
+247,"ROSÉ, Bruno Mars",APT.,2024
+248,Dion,The Wanderer,1961
+249,Stereophonics,Have A Nice Day,2001
+250,Eddy Grant,Gimme Hope Jo'Anna,1988
+251,Guus Meeuwis,Brabant,2002
+252,Crowded House,Don't Dream It's Over,1986
+253,Alex Warren,Ordinary,2025
+254,Sabrina Carpenter,Taste,2024
+255,Percy Sledge,When a Man Loves a Woman - Mono,1966
+256,"Coolio, L.V.",Gangsta's Paradise,1995
+257,Lil Nas X,STAR WALKIN' (League of Legends Worlds Anthem),2022
+258,"Rufus, Chaka Khan",Ain't Nobody,1983
+259,Laura Jansen,Wicked World,2009
+260,The Beatles,Get Back - Remastered 2009,1969
+261,Bill Haley & His Comets,"See You Later, Alligator",1956
+262,Linda Roos & Jessica,Ademnood,1995
+263,Robbie Williams,Feel,2002
+264,"Kanye West, Jamie Foxx",Gold Digger,2005
+265,Dire Straits,Walk Of Life,1985
+266,Caro Emerald,A Night Like This,2009
+267,Akon,Lonely,2005
+268,Tate McRae,greedy,2023
+269,Sam The Sham & The Pharaohs,Wooly Bully,1965
+270,Conny Vandenbos,Ik Ben Gelukkig Zonder Jou,1966
+271,"Jessie J, B.o.B",Price Tag,2011
+272,"Eurythmics, Annie Lennox, Dave Stewart",Sweet Dreams (Are Made of This) - 2005 Remaster,1983
+273,The Osmonds,Crazy Horses,1972
+274,Cuby & The Blizzards,"Window Of My Eyes - From ""The American"" Soundtrack",1968
+275,CHIC,Le Freak - 2018 Remaster,1978
+276,ABBA,Waterloo,1974
+277,Ilse DeLange,So Incredible,2008
+278,Dean Martin,That's Amore,1953
+279,Bob Marley & The Wailers,No Woman No Cry,1974
+280,Lynyrd Skynyrd,Sweet Home Alabama,1974
+281,Les Poppys,Non non rien n'a changé,1971
+282,Claude,C'est La Vie,2025
+283,SERA,Head Held High,2022
+284,Elton John,Your Song,1970
+285,Imagine Dragons,Thunder,2017
+286,Leo Sayer,When I Need You,1976
+287,Adele,Set Fire to the Rain,2011
+288,"Reel 2 Real, The Mad Stuntman, Erick Morillo","I Like To Move It (feat. The Mad Stuntman) - Erick ""More"" Album Mix",1993
+289,Meat Loaf,Paradise By the Dashboard Light,1977
+290,Shaboozey,A Bar Song (Tipsy),2024
+291,Dua Lipa,Break My Heart,2020
+292,Yves Berendse,Terug In De Tijd,2023
+293,OneRepublic,Counting Stars,2013
+294,Douwe Bob,Slow Down,2016
+295,The Beach Boys,Surfin' U.S.A. (Mono),1963
+296,"Shakira, Freshlyground",Waka Waka (This Time for Africa) [The Official 2010 FIFA World Cup (TM) Song] (feat. Freshlyground),2010
+297,Joe Cocker,With A Little Help From My Friends,1968
+298,Bryan Ferry,Let's Stick Together,1976
+299,"USHER, Lil Jon, Ludacris",Yeah!,2004
+300,"Queen, David Bowie",Under Pressure,1981
+301,Rosa Linn,SNAP,2022
+302,Sonny & Cher,I Got You Babe,1965
+303,The Everly Brothers,All I Have to Do Is Dream,1958
+304,The Arrows,I Love Rock N Roll,1975
+305,Zen,Hair,1969
+306,David Bowie,Life on Mars? - 1999 Remaster,1971
+307,Armand,Ben Ik Te Min,1966
+308,"Major Lazer, MØ, DJ Snake",Lean On (feat. MØ & DJ Snake),2015
+309,Teddy Swims,Mr. Know It All,2026
+310,"Kevin, Roxy Dekker",Jij Hebt Mij,2026
+311,Bruno Mars,I Just Might,2026
+312,Antoon,De Enige,2026
+313,"Idaly, Ronnie Flex, Frenna",POPULAIR,2026
+314,"Shakira, Burna Boy",Dai Dai,2026

@@ -1,0 +1,309 @@
+Card#,Artist,Title,Year
+1,Ryan Paris,Dolce Vita,1983
+2,Los Del Rio,Macarena,1995
+3,Michael Jackson,Bad,1987
+4,Ike & Tina Turner,Proud Mary,1971
+5,"David Guetta, Bebe Rexha, J Balvin",Say My Name,2018
+6,Chef'Special,Amigo,2017
+7,Jeroen Van Der Boom,Jij Bent Zo,2007
+8,Total Touch,Touch Me There,1996
+9,Charly Lownoise & Mental Theo,Hardcore Feelings - Radio Edit,1996
+10,Laid Back,Sunshine Reggae,1982
+11,10cc,Dreadlock Holiday,1978
+12,La Bouche,Be My Lover,1995
+13,Rozalla,Everybody's Free (To Feel Good),1991
+14,Salt-N-Pepa,Let's Talk About Sex,1990
+15,Shania Twain,Man! I Feel Like A Woman!,1999
+16,"Jay Sean, Lil Wayne",Down,2009
+17,Kaoma,Lambada - Original Version 1989,1989
+18,The Outhere Brothers,Don't Stop (Wiggle Wiggle) - OHB Radio Edit,1994
+19,Doja Cat,Say So,2019
+20,Mouth & MacNeal,How Do You Do?,1971
+21,Jonas Brothers,Sucker,2019
+22,"CNCO, Little Mix",Reggaetón Lento (Remix),2017
+23,Earth & Fire,Memories,1972
+24,Kenny B,Parijs,2015
+25,"Tom Jones, Mousse T.",Sexbomb,1999
+26,Def Rhymz,Schudden,2000
+27,"Master KG, Nomcebo Zikode",Jerusalema (feat. Nomcebo Zikode),2020
+28,Inner City,Big Fun,1988
+29,Beyoncé,Single Ladies (Put a Ring on It),2008
+30,Righeira,Vamos a la Playa,1983
+31,Bruno Mars,Treasure,2013
+32,George Baker Selection,Paloma Blanca,1975
+33,Owen Paul,My Favourite Waste of Time,1986
+34,Steve Miller Band,Abracadabra,1982
+35,Arie Ribbens,Brabantse Nachten Zijn Lang,1980
+36,Desireless,Voyage voyage,1986
+37,Playahitty,The Summer Is Magic - Radio Mix,1994
+38,Mory Kanté,Yeke Yeke,1987
+39,En Vogue,Free Your Mind,1992
+40,Suzan & Freek,Onderweg Naar Later,2021
+41,"Brandy, Monica",The Boy Is Mine,1998
+42,2 Brothers On The 4th Floor,Dreams (Will Come Alive),1994
+43,Mel & Kim,F.L.M.,1987
+44,Sugababes,Hole In The Head,2003
+45,Peter Frampton,Show Me The Way,1975
+46,Miley Cyrus,Party In The U.S.A.,2009
+47,"Fun Boy Three, Bananarama",It Ain't What You Do It's the Way That You Do It,1982
+48,Big Brovaz,Nu Flow,2002
+49,Billy Joel,The River of Dreams,1993
+50,"Flo Rida, Kesha",Right Round,2009
+51,Ritchie Valens,La Bamba,1958
+52,"Donnie, Rene Froger",Bon Gepakt,2021
+53,Anders Nilsen,Salsa Tequila,2014
+54,Madonna,Into the Groove,1985
+55,Gibson Brothers,Non Stop Dance,1977
+56,Coldplay,Viva La Vida,2008
+57,Sisqo,Thong Song,2000
+58,Alvaro Soler,Sofia,2016
+59,"Christina Aguilera, Redman",Dirrty (feat. Redman),2002
+60,"Luis Fonsi, Daddy Yankee",Despacito,2017
+61,Madness,Night Boat to Cairo,1979
+62,Zangeres Zonder Naam,'t Was aan de Costa del Sol,1975
+63,Tony Esposito,Papa Chico,1985
+64,Miami Sound Machine,Dr. Beat,1984
+65,"Camila Cabello, Young Thug",Havana (feat. Young Thug),2017
+66,One Direction,Best Song Ever,2013
+67,Treble,Ramaganana,2004
+68,"Gala, Molella, Phil Jay",Freed From Desire,1996
+69,Nelly,Hot In Herre,2002
+70,Janet Jackson,What Have You Done For Me Lately,1986
+71,Avicii,Wake Me Up,2013
+72,"Daft Punk, Pharrell Williams, Nile Rodgers",Get Lucky (feat. Pharrell Williams and Nile Rodgers),2013
+73,Phil Collins,Sussudio - 2016 Remaster,1985
+74,Small Faces,Lazy Sunday - 2012 Remaster,1968
+75,Lois Lane,It's The First Time,2011
+76,Domenico Modugno,Volare,1958
+77,Rolf Sanchez,Más Más Más,2020
+78,Spice Girls,Spice Up Your Life,1997
+79,Bruce Springsteen,Glory Days,1984
+80,Chris Rea,On the Beach,1988
+81,Bob Marley & The Wailers,Could You Be Loved,1980
+82,Jason Mraz,I'm Yours,2008
+83,Rocco Granata,Marina,1959
+84,The Radios,She Goes Nana,1992
+85,"Ed Sheeran, Justin Bieber",I Don't Care (with Justin Bieber),2019
+86,Mohombi,Bumpy Ride,2010
+87,JOP,Jij bent de zon,2000
+88,"Kraantje Pappie, Joshua Nolet",Liefde In De Lucht,2018
+89,Five,Everybody Get Up - Radio Edit,1998
+90,Ricky Nelson,Hello Mary Lou (Goodbye Heart),1961
+91,"Revelation Time, Ruud Gullit",South Africa - Single Version,1988
+92,Will Smith,Miami,1998
+93,Andre Hazes,Zomer,1991
+94,Boney M.,Hooray! Hooray! It's a Holi-Holiday,1979
+95,Montell Jordan,This Is How We Do It,1995
+96,Lumidee,"Never Leave You (Uh Oooh, Uh Oooh)",2003
+97,Toy-Box,Tarzan & Jane,1999
+98,"Bizzey, Jozo, Kraantje Pappie",Traag,2017
+99,Britney Spears,I'm a Slave 4 U,2001
+100,KC & The Sunshine Band,I'm Your Boogie Man,1976
+101,Sak Noel,Loca People - Radio Edit,2011
+102,Rene Froger,Just Say Hello!,1990
+103,Yves Larock,Rise Up - Radio Edit,2007
+104,Maxine & Franklin Brown,De Eerste Keer,1996
+105,The Beatles,I Feel Fine - Remastered 2015,1964
+106,Madonna,La Isla Bonita,1987
+107,Dante Thomas,Miss California,2001
+108,The Shorts,Comment ça va,1983
+109,Sir Mix-A-Lot,Baby Got Back,1992
+110,The Kinks,Sunny Afternoon,1966
+111,Vicky Leandros,"Theo, wir fahr'n nach Lodz",1974
+112,Claude,Ladada (Mon Dernier Mot),2022
+113,George Ezra,Shotgun,2018
+114,The Lovin' Spoonful,Summer in the City,1966
+115,Son Mieux,Multicolor,2022
+116,Les Humphries Singers,To My Father's House,1970
+117,Ilse DeLange,Puzzle Me,2008
+118,"Wildstylez, Niels Geusebroek",Year Of Summer - Radio Edit,2012
+119,Fleetwood Mac,Don't Stop,1977
+120,George McCrae,Rock Your Baby,1974
+121,Ed Sheeran,Shape of You,2017
+122,Will And The People,Lion In The Morning Sun,2012
+123,"John Travolta, Olivia Newton-John",You're The One That I Want - From “Grease”,1978
+124,"Pitbull, John Ryan",Fireball,2014
+125,Peret,Borriquito,1971
+126,Kris Kross,Jump,1992
+127,Freestylers,Push Up - Radio Edit,2004
+128,Luv',Casanova,1979
+129,Chipz,1001 Arabian Nights,2004
+130,"Twenty 4 Seven, Stay-C",Slave To The Music,1993
+131,"Soul II Soul, Caron Wheeler",Back To Life (However Do You Want Me),1989
+132,Gabriella Cilmi,Sweet About Me,2008
+133,Wolter Kroes,Viva Hollandia,2008
+134,Whigfield,Think of You - Radio Edit,1995
+135,Elvis Crespo,Suavemente,1998
+136,"Georgina, Janet",Ritmo! (feat. Janet),2001
+137,S'Express,Theme from S-Express,1988
+138,Dua Lipa,Dance The Night,2023
+139,Paul Elstak,Luv U More,1995
+140,DJ Jazzy Jeff & The Fresh Prince,Summertime,1991
+141,Gwen Stefani,Hollaback Girl,2004
+142,The Pussycat Dolls,Buttons,2005
+143,The Underdog Project,Summer Jam 2003 - DJ F.R.A.N.K's Summermix Short,2003
+144,The Blue Diamonds,Ramona,1960
+145,Juanes,La Camisa Negra,2005
+146,Gerard Cox,'T Is Weer Voorbij Die Mooie Zomer,1973
+147,Scott McKenzie,San Francisco (Be Sure to Wear Flowers in Your Hair),1967
+148,Willy William,Trompeta,2022
+149,Peggy Gou,(It Goes Like) Nanana - Edit,2023
+150,"Sam Feldt, Lucas & Steve, Wulf",Summer On You (feat. Wulf),2016
+151,"Calvin Harris, Dua Lipa",One Kiss,2018
+152,"Shakira, Alejandro Sanz",La Tortura (feat. Alejandro Sanz),2005
+153,Basshunter,Boten Anna - Radio edit,2006
+154,Roberto Jacketti & The Scooters,I Save The Day,1984
+155,Bryan Adams,Summer Of '69,1984
+156,"Snelle, Maan",Blijven Slapen,2021
+157,"Aventura, Judy Santos",Obsesión,2002
+158,Elton John,Can You Feel the Love Tonight - End Title,1994
+159,Bucks Fizz,Making Your Mind Up,1981
+160,The Pointer Sisters,Happiness,1978
+161,The J. Geils Band,Centerfold,1981
+162,Baltimora,Tarzan Boy,1984
+163,Dr. Alban,It's My Life,1992
+164,UB40,Kingston Town,1989
+165,2 Unlimited,Twilight Zone,1992
+166,"Vader Abraham, Mieke",Zomertijd,1974
+167,"Swedish House Mafia, John Martin",Don't You Worry Child - Radio Edit,2012
+168,Peter Andre,Mysterious Girl - Radio Edit,1995
+169,Alizée,Moi... Lolita,2000
+170,"Charlie Puth, Meghan Trainor",Marvin Gaye (feat. Meghan Trainor),2015
+171,"will.i.am, Eva Simons",This Is Love,2012
+172,The Rembrandts,"I'll Be There for You (Theme from ""Friends')",1995
+173,Katrina & The Waves,Walking On Sunshine,1985
+174,Michael Bublé,It's a Beautiful Day,2013
+175,José,I Will Follow Him,1982
+176,Rubberen Robbie,De Nederlandse Sterre Die Stralle Overal,2005
+177,Marco Schuitmaker,Engelbewaarder,2022
+178,Kevin Lyttle,Turn Me On,2003
+179,Jan Smit,Dan Volg Je Haar Benen,2017
+180,Justin Timberlake,"CAN'T STOP THE FEELING! (from DreamWorks Animation's ""TROLLS"")",2016
+181,Becky G,Shower,2014
+182,Destiny's Child,Survivor,2001
+183,Gusttavo Lima,Balada - Ao Vivo,2011
+184,"Ronnie Flex, Frenna",Energie,2016
+185,"Guus Meeuwis, Vagant",Per Spoor (Kedeng Kedeng) - Radio Versie,1996
+186,Wes,Alane - Radio Version,1996
+187,Pitbull,I Know You Want Me (Calle Ocho),2009
+188,Rihanna,Pon de Replay,2005
+189,ABBA,Summer Night City,1978
+190,"Dawn, Tony Orlando",Tie a Yellow Ribbon Round the Ole Oak Tree (feat. Tony Orlando) - 1998 Remastered,1973
+191,Jody Bernal,"Que Si, Que No - Sunclub Radio Mix",2000
+192,Daft Punk,Around the World - Radio Edit,1997
+193,Zara Larsson,Lush Life,2015
+194,"BLØF, Geike",Zoutelande (feat. Geike),2017
+195,Sean Kingston,Beautiful Girls,2007
+196,Calvin Harris,Summer,2014
+197,"Beyoncé, Shakira",Beautiful Liar,2007
+198,"Enrique Iglesias, Descemer Bueno, Zion & Lennox",SUBEME LA RADIO,2017
+199,Margaret Singana,We Are Growing,1989
+200,Mungo Jerry,In the Summertime,1970
+201,Afroman,Because I Got High,2001
+202,SNAP!,The Power,1990
+203,"Sam Feldt, RANI",Post Malone (feat. RANI),2019
+204,Laura Pausini,Strani amori,1994
+205,Color Me Badd,I Wanna Sex You Up,1991
+206,Daddy Yankee,Dura,2018
+207,"Michel Fugain, Le Big Bazar",Une belle histoire,1972
+208,Christina Milian,AM To PM,2001
+209,Junior Senior,Move Your Feet,2002
+210,Johnny Lion,Sophietje,1965
+211,S Club,Bring It All Back,1999
+212,Vengaboys,"Boom, Boom, Boom, Boom!!",1998
+213,Jennifer Lopez,Let's Get Loud,2000
+214,Alexandra Stan,Mr. Saxobeat,2010
+215,"Bob Sinclar, Cutee B., DollarMan, Big Ali, Makedah",Rock This Party - Everybody Dance Now,2006
+216,Ace of Base,The Sign,1993
+217,Take That,Everything Changes,1993
+218,Baha Men,Who Let The Dogs Out,2000
+219,USHER,U Remind Me,2001
+220,TOTO,Rosanna,1982
+221,Eros Ramazzotti,Se bastasse una canzone,1990
+222,Tacabro,Tacata,2012
+223,Sweet,Blockbuster,1973
+224,Acda en de Munnik,Het Regent Zonnestralen,1998
+225,Sean Paul,Temperature,2005
+226,Lionel Richie,My Destiny,1992
+227,The Rubettes,Sugar Baby Love,1974
+228,"Elton John, Kiki Dee",Don't Go Breaking My Heart,1976
+229,"Broederliefde, $hirak",Jungle,2016
+230,The Cats,Let's Dance,1972
+231,K3,Heyah Mama,1999
+232,Lady Gaga,Born This Way,2011
+233,Whitney Houston,Love Will Save the Day,1987
+234,Cascada,Everytime We Touch,2005
+235,Frizzle Sizzle,Alles Heeft Een Ritme,1986
+236,WALK THE MOON,Shut Up and Dance,2014
+237,Gipsy Kings,Bamboléo,1987
+238,Stevie Wonder,Happy Birthday,1980
+239,Las Ketchup,The Ketchup Song (Aserejé),2002
+240,Albert Hammond,The Free Electric Band,1973
+241,Ruth Jacott,Hartslag,1997
+242,Sia,Clap Your Hands,2010
+243,De La Soul,Me Myself and I,1989
+244,Chris Brown,Forever,2008
+245,De Spelbrekers,Katinka,1962
+246,CeeLo Green,Fuck You,2010
+247,Harry Styles,As It Was,2022
+248,Middle Of The Road,Soley Soley,1971
+249,"Snoop Dogg, Pharrell Williams",Drop It Like It's Hot,2004
+250,Gordon,Ik Bel Je Zomaar Even Op,1996
+251,Nelly Furtado,Maneater,2006
+252,Roxette,Joyride - Single Version,1991
+253,OneRepublic,RUNAWAY,2023
+254,"Martin Garrix, Bono, The Edge",We Are The People (feat. Bono & The Edge) - Official UEFA EURO 2020 Song,2021
+255,Jesse Green,Nice ‘n’ Slow,1991
+256,"Santana, The Product G&B",Maria Maria (feat. The Product G&B),1999
+257,"Joel Corry, MNEK",Head & Heart (feat. MNEK),2020
+258,The Pasadenas,Tribute (Right On),1988
+259,Alexis Jordan,Happiness,2010
+260,The Surfers,Windsurfin' (1978) - Original Version 1978,2008
+261,Cliff Richard & The Shadows,Summer Holiday,1963
+262,Lou Bega,Mambo No. 5 (a Little Bit of...),1999
+263,Belle Perez,Que Viva la Vida (Chiquitan),2005
+264,Dries Roelvink,Ik Kom Eraan (Route du Soleil),2007
+265,Juan Luis Guerra 4.40,Burbujas de Amor,1990
+266,Stromae,Alors on danse - Radio Edit,2009
+267,MIKA,Lollipop,2007
+268,"Kris Kross Amsterdam, Shaggy, Conor Maynard",Early In The Morning,2021
+269,Mud,Tiger Feet,1973
+270,Boney M.,Sunny,1976
+271,"LMFAO, Lauren Bennett, GoonRock",Party Rock Anthem,2011
+272,Billy Ocean,"Get Outta My Dreams, Get Into My Car",1988
+273,Maywood,Late At Night,1980
+274,Donna Summer,I Feel Love,1977
+275,Simple Minds,Don't You (Forget About Me) - Remastered 2001,1985
+276,André van Duin,Als De Zon Schijnt,1982
+277,Black Eyed Peas,I Gotta Feeling,2009
+278,The Everly Brothers,Cathy's Clown,1960
+279,Doe Maar,Sinds 1 Dag Of 2 (32 Jaar),1981
+280,June Lodge,Someone Loves You Honey,1980
+281,Olivia Newton-John,Xanadu,1980
+282,Miley Cyrus,Flowers,2023
+283,"Tiësto, Jonas Blue, Rita Ora",Ritual,2019
+284,Goombay Dance Band,Sun of Jamaica,1979
+285,Justin Bieber,Sorry,2015
+286,Wham!,Wake Me Up Before You Go-Go,1984
+287,Jessie J,Domino,2011
+288,Tarkan,Şımarık,1997
+289,Prince,Let's Go Crazy,1984
+290,"Maan, Goldband",Stiekem,2022
+291,Emma Heesters,Waar Ga Je Heen,2020
+292,Ava Max,Kings & Queens,2020
+293,Katy Perry,Roar,2013
+294,"Shawn Mendes, Camila Cabello",I Know What You Did Last Summer,2015
+295,Bolland & Bolland,Wait For The Sun,1972
+296,De Jeugd Van Tegenwoordig,Get Spanish,2011
+297,KC & The Sunshine Band,Come to My Island,1978
+298,Wham!,Club Tropicana,1983
+299,"Guillermo, Tropical Danny",Toppertje! - Original Mix,2006
+300,Sabrina,Boys - Summertime Love,1987
+301,"Jason Derulo, Nuka",Love Not War (The Tampa Beat),2020
+302,Bay City Rollers,Summerlove Sensation,1974
+303,The Beatles,Here Comes The Sun - Remastered 2009,1969
+304,Vanessa,Upside Down,2026
+305,Barry Manilow,Copacabana (At the Copa),1978
+306,Lobo,Caribbean Disco Show/Banana Boat/Island in the Sun/Cocoanut Woman/Jamaica Farewell/Judy Drownded/Angelina-Medley,2022
+307,ABBA,Dancing Queen,1976
+308,Sheppard,Geronimo,2014
