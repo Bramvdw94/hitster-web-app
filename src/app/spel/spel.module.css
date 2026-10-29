@@ -1,0 +1,78 @@
+/* Game mode. Shared page, button and list styles come from oefenen.module.css. */
+
+.radio {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+}
+
+input:checked + .radio {
+  border-color: var(--accent);
+}
+
+input:checked + .radio::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.choiceText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.choiceHint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.later {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.soon {
+  flex: none;
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.running {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-lg);
+}
+
+/* One turn */
+
+.verdict {
+  font-family: var(--font-display);
+  font-size: 54px;
+  line-height: 0.9;
+  text-align: center;
+}
+
+.record {
+  color: var(--close);
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}

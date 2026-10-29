@@ -139,18 +139,6 @@
   color: #2a0d00;
 }
 
-.soon {
-  flex: none;
-  padding: 4px 10px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .footer {
   color: var(--muted);
   font-size: 13px;
