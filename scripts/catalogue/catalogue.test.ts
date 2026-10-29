@@ -2,10 +2,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { EditionConfig } from "./editions";
 import { selectEditions } from "./editions";
-import { joinEdition } from "./join";
+import { formatYearCsv, parseHitifyHtml } from "./hitify";
+import { bestYears, joinEdition, songseekerYearsByTrack, withBestYear } from "./join";
 import { artistsNeedingKind, type Existing, type IncomingCard, type Plan, planImport } from "./plan";
 import { buildReport, formatReport, totalChanges } from "./report";
-import { parseCsv, parseJumbo, parseSongseeker, spotifyTrackId } from "./sources";
+import { parseCsv, parseJumbo, parseYearCsv, spotifyTrackId } from "./sources";
 import { splitByFreshness } from "./stored";
 import type { SpotifyTrack } from "./spotify";
 
@@ -32,13 +33,13 @@ const tracks: Record<string, SpotifyTrack | null> = {
   "5555555555555555555555": null,
 };
 
-function incomingCards(): { incoming: IncomingCard[]; withoutTrack: number[] } {
-  const { cards, withoutTrack } = joinEdition(
+function incomingCards(): { incoming: IncomingCard[]; withoutTrack: number[]; withoutYearRow: number[] } {
+  const { cards, withoutTrack, withoutYearRow } = joinEdition(
     parseJumbo(fixture("gameset_database.json"), "aaaa0001"),
-    parseSongseeker(fixture("hitster-nl.csv")),
+    parseYearCsv(fixture("hitster-nl.csv")),
     "songseeker",
   );
-  return { incoming: cards.map((c) => ({ ...c, track: tracks[c.spotifyTrackId] })), withoutTrack };
+  return { incoming: cards.map((c) => ({ ...c, track: tracks[c.spotifyTrackId] })), withoutTrack, withoutYearRow };
 }
 
 // What the database looks like after a plan is applied.
@@ -74,7 +75,7 @@ describe("sources", () => {
   });
 
   it("reads the songseeker list", () => {
-    const rows = parseSongseeker(fixture("hitster-nl.csv"));
+    const rows = parseYearCsv(fixture("hitster-nl.csv"));
     expect(rows).toHaveLength(5);
     expect(rows[0]).toEqual({
       cardNumber: 1,
@@ -99,9 +100,22 @@ describe("sources", () => {
     expect(spotifyTrackId("nope")).toBeNull();
   });
 
-  it("knows the Original NL edition", () => {
-    expect(selectEditions("all").map((e) => e.sku)).toEqual(["aaaa0001"]);
+  it("knows every Dutch edition", () => {
+    const all = selectEditions("all");
+    expect(all).toHaveLength(15);
+    expect(all[0]).toMatchObject({ sku: "aaaa0001", years: { source: "songseeker" } });
+    expect(new Set(all.map((e) => e.sku)).size).toBe(15);
+    expect(selectEditions("aaaa0006").map((e) => e.years.file)).toEqual(["data/sources/hitify/aaaa0006.csv"]);
     expect(() => selectEditions("aaaa0001,bbbb")).toThrow("Unknown edition: bbbb");
+  });
+
+  it("reads hitify's card table and writes it as a year list", () => {
+    const rows = parseHitifyHtml(fixture("hitify.html"));
+    expect(rows).toEqual([
+      { cardNumber: 1, artist: "Queen", title: "Bohemian Rhapsody - Remastered 2011", year: 1975 },
+      { cardNumber: 2, artist: "Run–D.M.C., Aerosmith", title: 'Walk This Way (feat. Aerosmith) & "more"', year: null },
+    ]);
+    expect(parseYearCsv(formatYearCsv(rows))).toEqual(rows);
   });
 });
 
@@ -120,6 +134,42 @@ describe("joinEdition", () => {
       artistKind: "person",
     });
     expect(incoming[3]).toMatchObject({ cardYear: null, yearSource: null, yearStatus: "missing" });
+  });
+
+  it("trusts a hitify year only when songseeker agrees", () => {
+    const jumbo = fixture("gameset_database.json");
+    const songseeker = songseekerYearsByTrack(parseJumbo(jumbo, "aaaa0001"), parseYearCsv(fixture("hitster-nl.csv")));
+    const hitify = [...parseHitifyHtml(fixture("hitify.html")), { cardNumber: 4, artist: "X", title: "Y", year: 2001 }];
+    const { cards, withoutTrack, withoutYearRow } = joinEdition(parseJumbo(jumbo, "aaaa0006"), hitify, "hitify", songseeker);
+
+    expect(cards.map((c) => [c.cardNumber, c.yearSource, c.yearStatus])).toEqual([
+      [1, "hitify", "certain"],
+      [2, null, "missing"],
+    ]);
+    expect(withoutTrack).toEqual([4]);
+    expect(withoutYearRow).toEqual([3]);
+
+    const disagreeing = joinEdition(parseJumbo(jumbo, "aaaa0006"), [{ ...hitify[0], year: 1976 }], "hitify", songseeker);
+    expect(disagreeing.cards[0].yearStatus).toBe("uncertain");
+  });
+
+  it("gives a song in several editions the best year of all of them", () => {
+    const original = incomingCards().incoming;
+    const hitify = joinEdition(
+      parseJumbo(fixture("gameset_database.json"), "aaaa0006"),
+      [{ cardNumber: 1, artist: "Queen", title: "Bohemian Rhapsody - Remastered 2011", year: 1976 }],
+      "hitify",
+    ).cards;
+    const best = bestYears([original, hitify]);
+    // Either order of import gives the songseeker year.
+    expect(bestYears([hitify, original]).get("2222222222222222222222")).toBe(best.get("2222222222222222222222"));
+    expect(withBestYear(hitify[0], best)).toMatchObject({
+      cardNumber: 1,
+      title: 'Bohemian "Rhapsody"',
+      cardYear: 1975,
+      yearSource: "songseeker",
+      yearStatus: "certain",
+    });
   });
 });
 
@@ -189,17 +239,42 @@ describe("planImport", () => {
   });
 });
 
+describe("several editions", () => {
+  it("keeps a song printed in two editions as one song with two cards", () => {
+    const original = incomingCards().incoming;
+    const afterOriginal = apply(empty, planImport(config, empty, original, new Map(), newId));
+
+    const hitify = joinEdition(
+      parseJumbo(fixture("gameset_database.json"), "aaaa0006"),
+      parseHitifyHtml(fixture("hitify.html")),
+      "hitify",
+    ).cards;
+    const best = bestYears([original, hitify]);
+    const guilty: IncomingCard[] = hitify.map((c) => ({ ...withBestYear(c, best), track: tracks[c.spotifyTrackId] ?? null }));
+    const guiltyConfig = { ...config, sku: "aaaa0006", name: "Guilty Pleasures", cardCount: 334 };
+    const existing = { ...afterOriginal, edition: null, cards: [] };
+    const plan = planImport(guiltyConfig, existing, guilty, new Map(), newId);
+
+    const queen = afterOriginal.songs.find((s) => s.spotify_track_id === "2222222222222222222222")!;
+    expect(plan.songs.map((s) => s.spotify_track_id)).toEqual(["9999999999999999999999"]);
+    expect(plan.cards.find((c) => c.card_number === 1)).toMatchObject({ song_id: queen.id });
+    expect(plan.changes).toMatchObject({ editions: 1, songs: 1, cards: 2 });
+  });
+});
+
 describe("report", () => {
   it("counts cards, missing years and unplayable songs", () => {
-    const { incoming, withoutTrack } = incomingCards();
+    const { incoming, withoutTrack, withoutYearRow } = incomingCards();
     const changes = { editions: 0, songs: 0, artists: 0, songArtists: 0, cards: 0 };
-    const report = buildReport(config, incoming, withoutTrack, changes);
+    const report = buildReport(config, incoming, { withoutTrack, withoutYearRow }, changes);
 
     expect(report).toMatchObject({
       cards: 4,
       expectedCards: 5,
       withoutTrack: [4],
+      withoutYearRow: [],
       withoutYear: [5],
+      musicbrainzYears: [],
       uncertainYears: [],
       notOnSpotify: [5],
       notPlayableNl: [3, 5],
@@ -208,6 +283,9 @@ describe("report", () => {
     expect(text).toContain("| Cards | 4 of 5 |");
     expect(text).toContain("| Not playable in NL | 2 (cards 3, 5) |");
     expect(text).toContain("| Changed | no changes |");
+
+    const many = formatReport({ ...report, uncertainYears: Array.from({ length: 21 }, (_, i) => i + 1) });
+    expect(many).toContain("| Uncertain years | 21 |");
   });
 });
 

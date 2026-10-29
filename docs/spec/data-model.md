@@ -52,4 +52,6 @@ Settled with Bram on 2026-10-29 in [Define the data model and song import](https
 4. Upsert on (`sku`, `card_number`) and `spotify_track_id`. Songs are deduplicated on the Spotify track ID. `year_overrides` is never touched.
 5. A run looks up every track before it writes anything, then writes only rows that changed, so a second run reports no changes. `--dry-run` reports without writing.
 6. Each run prints a report per edition: cards, songs without a year, uncertain years and songs not playable in NL.
-7. An edition missing from Jumbo's file: Bram copies the official playlist into his own account once, and the script reads that playlist.
+7. An edition missing from Jumbo's file: Bram copies the official playlist into his own account once, and the script reads that playlist. As of 2026-10-29 every Dutch edition is in Jumbo's file, so this fallback is not built (#25).
+8. A song in several editions takes the best year over all of them: songseeker, then hitify confirmed by songseeker, then hitify, then MusicBrainz. See `data/sources/README.md`.
+9. The view `edition_song_counts` gives each edition's number of playable songs, for the edition list.

@@ -17,7 +17,13 @@
     },
     {
       "sku": "aaaa0006",
-      "gameset_data": { "cards": [{ "CardNumber": "00001", "Spotify": "9999999999999999999999" }] }
+      "gameset_data": {
+        "cards": [
+          { "CardNumber": "00001", "Spotify": "2222222222222222222222" },
+          { "CardNumber": "00002", "Spotify": "9999999999999999999999" },
+          { "CardNumber": "00003", "Spotify": "8888888888888888888888" }
+        ]
+      }
     }
   ]
 }
