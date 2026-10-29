@@ -18,7 +18,7 @@ Settled with Bram on 2026-10-29 in [Define the data model and song import](https
 - `kind` comes from Jumbo's `ArtistType` (solo/group), with MusicBrainz as a fallback. It drives the "surname alone counts for persons only" rule (#7).
 - The effective card year is the `year_overrides` row if one exists, otherwise `songs.card_year`. The view `song_card_years` gives it per song, and `playable_songs` lists only the songs that may be dealt.
 - Artists are keyed on their Spotify artist ID. When a card lists a solo artist differently from Spotify, the card's spelling is added as an alias.
-- Only a player with `profiles.is_admin` (Bram) can write `year_overrides`. The answer screen shows him a "Jaar klopt niet" button.
+- Only a player with `profiles.is_admin` (Bram) can write `year_overrides`, and only through the RPC `correct_card_year(song_id, card_year, note)`, which sets `set_by` and `set_at` and returns the new effective card year. Saving again replaces the correction. Attempts already scored are not re-scored. The answer screen shows him a "Jaar klopt niet" link.
 
 ## Per player (Row Level Security: only your own rows)
 
