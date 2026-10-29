@@ -19,8 +19,9 @@ import { fetchTrack, getAppToken, type SpotifyTrack } from "./catalogue/spotify"
 import { splitByFreshness } from "./catalogue/stored";
 
 const DEFAULT_SUPABASE_URL = "https://vijpefspdqpgpffwoxaj.supabase.co";
-// A development-mode app gets a small rolling budget; one call a second stays well under it.
-const SPOTIFY_DELAY_MS = 1000;
+// A development-mode app gets a small, unpublished rolling budget, and going over it locks the app
+// out for a day. Bram asked to go very slowly: one call every 3 seconds (about 20 a minute).
+const SPOTIFY_DELAY_MS = 3000;
 const MUSICBRAINZ_DELAY_MS = 1100;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
