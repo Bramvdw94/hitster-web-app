@@ -14,13 +14,27 @@ const KINDS: Record<string, ArtistKind> = {
 
 type SearchResponse = { artists?: { name: string; type?: string; score?: number }[] };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Only a top hit with the exact name (ignoring case) counts; anything else stays unknown.
-export async function lookupArtistKind(name: string, fetchFn: typeof fetch = fetch): Promise<ArtistKind | null> {
+// MusicBrainz answers 503 when it is busy, so that is retried rather than read as "unknown".
+export async function lookupArtistKind(
+  name: string,
+  { fetchFn = fetch, maxAttempts = 4, retryDelayMs = 2000 }: { fetchFn?: typeof fetch; maxAttempts?: number; retryDelayMs?: number } = {},
+): Promise<ArtistKind | null> {
   const query = encodeURIComponent(`artist:"${name.replace(/"/g, "")}"`);
-  const response = await fetchFn(`https://musicbrainz.org/ws/2/artist?query=${query}&limit=1&fmt=json`, {
-    headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
-  });
-  if (!response.ok) return null;
+  let response: Response;
+  for (let attempt = 1; ; attempt++) {
+    response = await fetchFn(`https://musicbrainz.org/ws/2/artist?query=${query}&limit=1&fmt=json`, {
+      headers: { "User-Agent": USER_AGENT, Accept: "application/json" },
+    });
+    if ((response.status !== 503 && response.status !== 429) || attempt >= maxAttempts) break;
+    await sleep(retryDelayMs * attempt);
+  }
+  if (!response.ok) {
+    console.log(`MusicBrainz answered ${response.status} for ${name}; kind stays unknown`);
+    return null;
+  }
 
   const top = ((await response.json()) as SearchResponse).artists?.[0];
   if (!top || top.name.toLowerCase() !== name.toLowerCase() || (top.score ?? 0) < 90) return null;
