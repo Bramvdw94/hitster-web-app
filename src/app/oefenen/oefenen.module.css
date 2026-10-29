@@ -1,0 +1,401 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 16px 32px;
+}
+
+.placeholder {
+  min-height: 320px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.back {
+  align-self: flex-start;
+  padding: 4px 0;
+  color: var(--lilac);
+  font-weight: 700;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topTitle {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.section {
+  margin-bottom: 8px;
+  color: var(--lilac);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+}
+
+.problem {
+  padding: 12px 14px;
+  border: 1px solid var(--wrong);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 14px;
+}
+
+/* Start screen */
+
+.setup {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.fieldset {
+  border: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.option + .option {
+  border-top: 1px solid var(--line);
+}
+
+.option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.box {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--muted);
+  border-radius: 6px;
+  color: #2a0d00;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.option input:checked + .box {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.option input:checked + .box::after {
+  content: "✓";
+}
+
+.option input:focus-visible + .box {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.optionName {
+  font-weight: 800;
+}
+
+.count {
+  margin-left: auto;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Buttons */
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.cta {
+  width: 100%;
+  margin-top: auto;
+  padding: 16px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  box-shadow: 0 10px 30px rgba(255, 122, 61, 0.35);
+  color: #2a0d00;
+  font-family: var(--font-display);
+  font-size: 26px;
+  letter-spacing: 0.06em;
+  text-align: center;
+  cursor: pointer;
+}
+
+.cta:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: default;
+}
+
+.secondary {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+}
+
+.secondary:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* One turn */
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.status b {
+  color: var(--text);
+}
+
+.answer {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field label {
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 2px solid var(--line);
+  border-radius: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+}
+
+.field input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+/* Sleeve reveal */
+
+.sleeve {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+}
+
+.cover {
+  display: block;
+  flex: none;
+  width: 96px;
+  height: 96px;
+  border-radius: 6px;
+  background: var(--line);
+  object-fit: cover;
+}
+
+.sleeveText {
+  min-width: 0;
+}
+
+.sleeveYear {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 54px;
+  line-height: 0.9;
+}
+
+.uncertain {
+  color: var(--close);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sleeveTitle {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.sleeveArtist {
+  color: var(--muted);
+}
+
+.scoreboard div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.scoreboard dt {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scoreboard dd {
+  flex: none;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: 0.03em;
+}
+
+.good {
+  color: var(--good);
+}
+
+.close {
+  color: var(--close);
+}
+
+.wrong {
+  color: var(--wrong);
+}
+
+/* Summary */
+
+.total {
+  text-align: center;
+}
+
+.totalScore {
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 120px;
+  line-height: 0.9;
+}
+
+.totalScore span {
+  color: var(--muted);
+  font-size: 40px;
+}
+
+.decades {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: none;
+}
+
+.decade {
+  display: grid;
+  grid-template-columns: 52px 1fr 52px;
+  align-items: center;
+  gap: 12px;
+}
+
+.decadeName,
+.decadeScore {
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.decadeName {
+  color: var(--lilac);
+}
+
+.decadeScore {
+  color: var(--muted);
+  text-align: right;
+}
+
+.bar {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
