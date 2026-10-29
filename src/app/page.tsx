@@ -1,3 +1,6 @@
+import { Suspense } from "react";
+import { createClient } from "@/lib/supabase/server";
+import { logOut } from "./actions";
 import styles from "./page.module.css";
 
 const entries = [
@@ -11,6 +14,28 @@ const entries = [
   },
 ];
 
+async function Player() {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  const playerId = data?.claims.sub;
+  const { data: profile } = playerId
+    ? await supabase.from("profiles").select("display_name").eq("id", playerId).maybeSingle()
+    : { data: null };
+
+  return (
+    <div className={styles.player}>
+      <p className={styles.playerName}>
+        Hoi <strong>{profile?.display_name ?? "speler"}</strong>
+      </p>
+      <form action={logOut}>
+        <button type="submit" className={styles.logout}>
+          Uitloggen
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <main className={styles.page}>
@@ -21,6 +46,10 @@ export default function Home() {
           <p className={styles.tagline}>Oefenen voor Hitster</p>
         </div>
       </header>
+
+      <Suspense fallback={<div className={styles.player} />}>
+        <Player />
+      </Suspense>
 
       <nav aria-label="Kies wat je wilt doen">
         <p className={styles.label}>Wat wil je doen?</p>

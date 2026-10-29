@@ -36,6 +36,26 @@ Secrets are pasted by Bram in the dashboards and never go through chat or the re
 - Supabase redirect allowlist: `https://jaartal.elbra.nl/**`, `https://*-bram-s-projects13.vercel.app/**` (previews) and `http://localhost:3000/**`.
 - Scopes: `streaming user-read-email user-read-private user-modify-playback-state user-read-playback-state`.
 
+## Spotify login
+
+Added in [Log in with Spotify and keep the Spotify token server-side](https://github.com/Bramvdw94/hitster-web-app/issues/19).
+
+- `/login` starts Supabase's Spotify OAuth (PKCE). Every other page redirects there when logged out; `/api/*` answers 401.
+- `/auth/callback` exchanges the code and stores the Spotify tokens right away in `private.spotify_tokens` (refresh token encrypted in Supabase Vault). Supabase hands over the refresh token only in this one exchange.
+- `GET /api/spotify/token` returns `{ accessToken, expiresAt }` for the logged-in player and refreshes with `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` when less than 5 minutes are left. `?vernieuw=1` forces a refresh to test that path.
+- The server reaches `private.spotify_tokens` only through `public.get_spotify_tokens` and `public.store_spotify_tokens`, which only `service_role` (the `SUPABASE_SECRET_KEY`) may execute.
+- A Spotify account that isn't on the dev app's allowlist sees "Je staat nog niet op de gastenlijst. Vraag Bram om je toe te voegen."
+
+### Making Bram admin (one-off)
+
+After Bram has logged in once, run this in the Supabase SQL editor (replace the email with the one on his Spotify account):
+
+```sql
+update public.profiles
+set is_admin = true
+where id = (select id from auth.users where email = 'bram@example.com');
+```
+
 ## GitHub Actions
 
 Added in [Scaffold the Jaartal app and its deploy pipeline](https://github.com/Bramvdw94/hitster-web-app/issues/18).
