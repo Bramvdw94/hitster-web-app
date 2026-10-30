@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countdownText, daysUntilNewYearsEve, decadeLabel, percent, weakestDecade } from "./stats";
+import { countdownText, daysUntilNewYearsEve, decadeLabel, percent, weakestDecade, yearsOffText } from "./stats";
 
 describe("daysUntilNewYearsEve", () => {
   it("counts calendar days in Amsterdam", () => {
@@ -54,5 +54,13 @@ describe("weakestDecade", () => {
 
   it("flags nothing with fewer than two decades", () => {
     expect(weakestDecade([{ decade: 1980, answered: 3, close: 0 }])).toBeNull();
+  });
+});
+
+describe("yearsOffText", () => {
+  it("writes the average the Dutch way", () => {
+    expect(yearsOffText(2.3)).toBe("gem. 2,3 jaar ernaast");
+    expect(yearsOffText(1)).toBe("gem. 1 jaar ernaast");
+    expect(yearsOffText(0)).toBe("gem. precies goed");
   });
 });

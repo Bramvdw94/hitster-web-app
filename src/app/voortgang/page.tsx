@@ -11,6 +11,8 @@ import {
   percent,
   weakestDecade,
   type MyStats,
+  type YearsOff,
+  yearsOffText,
 } from "@/lib/stats/stats";
 import { createClient } from "@/lib/supabase/server";
 import { startPractice } from "../oefenen/actions";
@@ -77,8 +79,9 @@ function Totals({ stats }: { stats: MyStats }) {
   );
 }
 
-function Decades({ decades }: { decades: MyStats["decades"] }) {
+function Decades({ decades, yearsOff }: { decades: MyStats["decades"]; yearsOff: YearsOff["decades"] }) {
   const weakest = weakestDecade(decades);
+  const off = new Map(yearsOff.map((d) => [d.decade, d.avgOff]));
   return (
     <section className={styles.panel} aria-label="Per decennium">
       <p className={styles.label}>Per decennium · binnen 1 jaar goed</p>
@@ -92,12 +95,43 @@ function Decades({ decades }: { decades: MyStats["decades"] }) {
                 <span className={styles[decadeTone(share)]} style={{ width: `${share}%` }} />
               </span>
               <span className={styles.value}>{share}%</span>
+              {off.has(d.decade) ? (
+                <Link href={`/ontdek?decennium=${d.decade}`} className={styles.off}>
+                  {yearsOffText(off.get(d.decade)!)}
+                </Link>
+              ) : null}
               {d.decade === weakest ? <span className={styles.flag}>Zwakst</span> : null}
             </li>
           );
         })}
       </ul>
-      <p className={styles.foot}>Over je laatste 50 antwoorden per decennium.</p>
+      <p className={styles.foot}>
+        Over je laatste 50 antwoorden per decennium. Jaren ernaast telt alleen antwoorden met een jaartal.
+      </p>
+    </section>
+  );
+}
+
+// The artists whose years the player misses by the most, each a link to their Ontdek timeline.
+function Artists({ artists }: { artists: YearsOff["artists"] }) {
+  return (
+    <section className={styles.panel} aria-label="Per artiest">
+      <p className={styles.label}>Per artiest · verst ernaast</p>
+      {artists.length === 0 ? (
+        <p className={styles.foot}>Raad minstens 3 jaartallen van een artiest, dan verschijnt die hier.</p>
+      ) : (
+        <ul className={styles.list}>
+          {artists.map((a) => (
+            <li key={a.id}>
+              <Link href={`/ontdek?artiest=${a.id}`} className={styles.item}>
+                <span className={styles.name}>{a.name}</span>
+                <span className={styles.count}>{yearsOffText(a.avgOff)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className={styles.foot}>Gemiddeld over je laatste 50 jaartallen per artiest, vanaf 3.</p>
     </section>
   );
 }
@@ -210,9 +244,14 @@ async function Stats() {
   const { data: claims } = await supabase.auth.getClaims();
   if (!claims?.claims.sub) redirect("/login");
 
-  const { data, error } = await supabase.rpc("get_my_stats");
+  const [{ data, error }, { data: offData, error: offError }] = await Promise.all([
+    supabase.rpc("get_my_stats"),
+    supabase.rpc("get_my_years_off"),
+  ]);
   if (error) throw error;
+  if (offError) throw offError;
   const stats = data as MyStats;
+  const yearsOff = offData as YearsOff;
   const days = daysUntilNewYearsEve(new Date());
   if (isEmpty(stats)) {
     return (
@@ -236,7 +275,8 @@ async function Stats() {
           <ScoreChart sessions={stats.sessions} />
         </section>
       ) : null}
-      {stats.decades.length > 0 ? <Decades decades={stats.decades} /> : null}
+      {stats.decades.length > 0 ? <Decades decades={stats.decades} yearsOff={yearsOff.decades} /> : null}
+      <Artists artists={yearsOff.artists} />
       <Editions editions={stats.editions} />
       <Solo solo={stats.solo} />
       <Hardest songs={stats.hardest} weakCount={weakCount} />

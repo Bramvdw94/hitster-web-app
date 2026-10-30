@@ -1,0 +1,267 @@
+/* Ontdek: search on top, then the songs on a vertical timeline, oldest first. */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: 100%;
+  max-width: 480px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.placeholder {
+  min-height: 320px;
+}
+
+.fieldPlaceholder {
+  height: 50px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.back {
+  align-self: flex-start;
+  padding: 4px 0;
+  color: var(--lilac);
+  font-weight: 700;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0.02em;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.label {
+  margin-bottom: 8px;
+  color: var(--lilac);
+  font-family: var(--font-display);
+  font-size: 18px;
+  letter-spacing: 0.12em;
+}
+
+/* Search */
+
+.search {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip,
+.chipOn {
+  padding: 6px 14px 4px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.04em;
+}
+
+.chipOn {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #2a0d00;
+}
+
+.range {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  align-items: end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.range label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.range input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: 18px;
+}
+
+.go {
+  padding: 12px 16px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* Results */
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.resultHead {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.cta {
+  width: 100%;
+  margin-top: 6px;
+  padding: 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  box-shadow: 0 10px 30px rgba(255, 122, 61, 0.35);
+  color: #2a0d00;
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+/* The timeline: a rail on the left with one year marker per group. */
+
+.timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-left: 22px;
+  list-style: none;
+}
+
+.timeline::before {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 5px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--line);
+  content: "";
+}
+
+.year {
+  position: relative;
+}
+
+.year::before {
+  position: absolute;
+  top: 9px;
+  left: -22px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: var(--accent);
+  content: "";
+}
+
+.yearLabel {
+  display: inline-block;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1.1;
+}
+
+.songs {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  list-style: none;
+}
+
+.song {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+
+.song + .song {
+  border-top: 1px solid var(--line);
+}
+
+.cover {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background: var(--line);
+  object-fit: cover;
+}
+
+.songText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.artist {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.known {
+  color: var(--good);
+}

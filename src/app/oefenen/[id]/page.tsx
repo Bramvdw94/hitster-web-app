@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { artistName } from "@/lib/explore/explore";
+import { isFiltered, rangeLabel, type PracticeFilter } from "@/lib/practice/filter";
 import { boxMove, KNOWN_BOX } from "@/lib/practice/leitner";
 import { loadCandidates } from "@/lib/practice/progress";
 import { summarise } from "@/lib/practice/scoring";
@@ -27,13 +29,23 @@ function formatYearsOff(value: number): string {
   return value.toLocaleString("nl-NL", { maximumFractionDigits: 1 });
 }
 
+// "Queen · 80s": what the session was filtered on, or null.
+function filterText(artist: string | null, filter: PracticeFilter): string | null {
+  const parts = [artist, rangeLabel(filter)].filter((p): p is string => p !== null);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 async function Summary({ state }: { state: SessionState }) {
   const supabase = await createClient();
-  const [cardYears, titles, candidates] = await Promise.all([
-    cardYearsOf(supabase, state.session.song_ids),
-    titlesOf(supabase, state.session.song_ids),
-    loadCandidates(supabase, state.session.edition_ids),
+  const { session } = state;
+  const filter: PracticeFilter = { artistId: session.artist_id, yearFrom: session.year_from, yearTo: session.year_to };
+  const [cardYears, titles, candidates, artist] = await Promise.all([
+    cardYearsOf(supabase, session.song_ids),
+    titlesOf(supabase, session.song_ids),
+    loadCandidates(supabase, session.edition_ids, false, filter),
+    artistName(supabase, session.artist_id),
   ]);
+  const chosen = filterText(artist, filter);
   const moves = state.attempts
     .map((a) => ({ ...a, move: boxMove(a.box_before, a.box_after), title: titles.get(a.song_id) ?? "" }))
     .filter((a) => a.move !== "same");
@@ -48,6 +60,7 @@ async function Summary({ state }: { state: SessionState }) {
     <>
       <section className={styles.total} aria-label="Score">
         <p className={styles.section}>Ronde {state.session.session_number}</p>
+        {chosen ? <p className={styles.filterLabel}>{chosen}</p> : null}
         <p className={styles.totalScore}>
           {summary.points}
           <span> / {summary.maxPoints}</span>
@@ -80,7 +93,12 @@ async function Summary({ state }: { state: SessionState }) {
         <h2 className={styles.section}>Dozen</h2>
         <p className={styles.hint}>
           {known} van {candidates.length} gekend
-          {state.session.weak_only || state.session.edition_ids.length === 0 ? " in alle edities" : " in deze edities"}.
+          {isFiltered(filter)
+            ? " met deze keuze"
+            : state.session.weak_only || state.session.edition_ids.length === 0
+              ? " in alle edities"
+              : " in deze edities"}
+          .
         </p>
         {moves.length > 0 ? (
           <ul className={styles.moves}>
@@ -109,6 +127,9 @@ async function Summary({ state }: { state: SessionState }) {
           {state.session.edition_ids.map((id) => (
             <input key={id} type="hidden" name="edition" value={id} />
           ))}
+          {session.artist_id ? <input type="hidden" name="artiest" value={session.artist_id} /> : null}
+          {session.year_from !== null ? <input type="hidden" name="van" value={session.year_from} /> : null}
+          {session.year_to !== null ? <input type="hidden" name="tot" value={session.year_to} /> : null}
           <button type="submit" className={styles.cta}>
             Nog een ronde
           </button>
