@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect, unstable_rethrow } from "next/navigation";
-import { findActiveGame, loadGame, personalBest, timelineCard } from "@/lib/game/games";
+import { findActiveGame, gamePath, loadGame, personalBest, timelineCard } from "@/lib/game/games";
 import {
   buyCard,
   canBuy,
@@ -46,7 +46,7 @@ export async function startSoloGame(formData: FormData) {
   let gameId: string;
   try {
     const running = await findActiveGame(supabase, playerId);
-    if (running && !replace) redirect(`/spel/${running.id}`);
+    if (running && !replace) redirect(gamePath(running));
 
     const candidates = await loadCandidates(supabase, editionIds);
     const deck = shuffle(candidates, Math.random)

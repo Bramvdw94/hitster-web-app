@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { findActiveGame, personalBest } from "@/lib/game/games";
+import { findActiveGame, gamePath, personalBest } from "@/lib/game/games";
 import { WINNING_CARDS } from "@/lib/game/state";
 import { createClient } from "@/lib/supabase/server";
 import { EditionPicker, type EditionOption } from "../oefenen/edition-picker";
@@ -81,11 +81,15 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/spel">["searc
 
       {running ? (
         <div className={styles.running}>
-          <p>
-            Je spel loopt nog: <b>{running.state.timeline.length}</b> van {WINNING_CARDS} kaarten na{" "}
-            {running.state.placed} nummers.
-          </p>
-          <Link href={`/spel/${running.id}`} className={shared.cta}>
+          {running.mode === "solo" ? (
+            <p>
+              Je spel loopt nog: <b>{running.state.timeline.length}</b> van {WINNING_CARDS} kaarten na{" "}
+              {running.state.placed} nummers.
+            </p>
+          ) : (
+            <p>Jullie spel samen loopt nog, met {running.state.seats.map((s) => s.name).join(", ")}.</p>
+          )}
+          <Link href={gamePath(running)} className={shared.cta}>
             Ga verder
           </Link>
           <input type="hidden" name="vervang" value="1" />
@@ -112,7 +116,13 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/spel">["searc
         <legend className={shared.section}>Spelers</legend>
         <div className={shared.list}>
           <Choice name="Solo" hint="Score = nummers tot 10 kaarten" checked ready />
-          <Choice name="Samen op één telefoon" hint="2 tot 8 spelers, telefoon doorgeven" checked={false} ready={false} />
+          <Link href="/samen" className={`${shared.option} ${styles.link}`}>
+            <span className={styles.radio} aria-hidden="true" />
+            <span className={styles.choiceText}>
+              <span className={shared.optionName}>Samen op één telefoon</span>
+              <span className={styles.choiceHint}>2 tot 8 spelers, telefoon doorgeven</span>
+            </span>
+          </Link>
         </div>
       </fieldset>
 

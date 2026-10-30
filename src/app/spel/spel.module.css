@@ -117,3 +117,8 @@ input:checked + .radio::after {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+
+.link {
+  color: inherit;
+  text-decoration: none;
+}
