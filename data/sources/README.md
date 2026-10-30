@@ -11,9 +11,11 @@ Snapshots read by the catalogue import (`scripts/import-catalogue.ts`). The app 
 ## How a card gets its year
 
 1. Songseeker (Original NL only): `certain`.
-2. Hitify: `uncertain`, or `certain` when songseeker gives the same Spotify track the same year.
-3. Neither has a year: MusicBrainz' earliest first-release date of a recording with that title and artist, `uncertain`.
+2. Hitify: `certain` when songseeker or MusicBrainz gives the same year, otherwise `uncertain`.
+3. Neither list has a year: MusicBrainz' earliest first-release date of a recording with that title and artist, `uncertain`.
 4. Nothing: `missing`, and the song is not dealt.
+
+The import asks MusicBrainz once for every song and stores its year in `songs.musicbrainz_year`, also for songseeker's years. The view `year_disagreements` lists every song whose card year MusicBrainz contradicts and Bram has not corrected: the list to check against the printed cards. A single, an album and a re-release can be a year apart, so a disagreement is a question, not proof of a wrong year.
 
 A song printed in several editions is one song with one year: the best one over all editions. Bram's corrections (`year_overrides`) always win.
 

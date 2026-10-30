@@ -32,7 +32,7 @@ export async function loadExisting(db: SupabaseClient, sku: string, incoming: In
   const songs = await selectIn<SongRow>(
     db,
     "songs",
-    "id, spotify_track_id, title, card_year, year_source, year_status, playable_nl, cover_url",
+    "id, spotify_track_id, title, card_year, year_source, year_status, playable_nl, cover_url, musicbrainz_year, musicbrainz_checked_at",
     "spotify_track_id",
     incoming.map((c) => c.spotifyTrackId),
   );
@@ -97,7 +97,13 @@ async function check(step: string, request: PromiseLike<{ error: { message: stri
 
 // Writes only what the plan lists, plus checked_at for the tracks looked up on Spotify.
 // year_overrides is never touched.
-export async function applyPlan(db: SupabaseClient, plan: Plan, lookedUp: string[], now = new Date().toISOString()) {
+export async function applyPlan(
+  db: SupabaseClient,
+  plan: Plan,
+  lookedUp: string[],
+  askedMusicbrainz: string[] = [],
+  now = new Date().toISOString(),
+) {
   if (plan.edition) await check("Writing edition", db.from("editions").upsert(plan.edition, { onConflict: "sku" }));
 
   for (const part of chunks(plan.artists)) {
@@ -117,6 +123,12 @@ export async function applyPlan(db: SupabaseClient, plan: Plan, lookedUp: string
   }
   for (const part of chunks(lookedUp)) {
     await check("Marking songs checked", db.from("songs").update({ checked_at: now }).in("spotify_track_id", part));
+  }
+  for (const part of chunks(askedMusicbrainz)) {
+    await check(
+      "Marking songs checked on MusicBrainz",
+      db.from("songs").update({ musicbrainz_checked_at: now }).in("spotify_track_id", part),
+    );
   }
   if (plan.removedCards.length > 0) {
     await check(

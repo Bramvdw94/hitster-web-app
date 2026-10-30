@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { EditionConfig } from "./editions";
 import { selectEditions } from "./editions";
 import { formatYearCsv, parseHitifyHtml } from "./hitify";
-import { bestYears, joinEdition, songseekerYearsByTrack, withBestYear } from "./join";
+import { bestYears, joinEdition, songseekerYearsByTrack, withBestYear, withMusicbrainzYear } from "./join";
 import { artistsNeedingKind, type Existing, type IncomingCard, keepUnseenCards, type Plan, planImport } from "./plan";
 import { buildReport, formatReport, totalChanges } from "./report";
 import { parseCsv, parseJumbo, parseYearCsv, spotifyTrackId } from "./sources";
@@ -239,6 +239,23 @@ describe("planImport", () => {
   });
 });
 
+describe("withMusicbrainzYear", () => {
+  const base = incomingCards().incoming[0];
+  const hitify = { ...base, yearSource: "hitify" as const, yearStatus: "uncertain" as const, cardYear: 1977 };
+
+  it("makes a hitify year certain when MusicBrainz agrees", () => {
+    expect(withMusicbrainzYear(hitify, 1977).yearStatus).toBe("certain");
+    expect(withMusicbrainzYear(hitify, 1978).yearStatus).toBe("uncertain");
+    expect(withMusicbrainzYear(hitify, null)).toBe(hitify);
+  });
+
+  it("fills a missing year and leaves songseeker alone", () => {
+    const missing = { ...base, cardYear: null, yearSource: null, yearStatus: "missing" as const };
+    expect(withMusicbrainzYear(missing, 1980)).toMatchObject({ cardYear: 1980, yearSource: "musicbrainz", yearStatus: "uncertain" });
+    expect(withMusicbrainzYear(base, 1999)).toBe(base);
+  });
+});
+
 describe("several editions", () => {
   it("keeps a song printed in two editions as one song with two cards", () => {
     const original = incomingCards().incoming;
@@ -289,6 +306,7 @@ describe("report", () => {
       withoutYear: [5],
       musicbrainzYears: [],
       waitingForSpotify: [],
+      disagreements: [],
       uncertainYears: [],
       notOnSpotify: [5],
       notPlayableNl: [3, 5],
@@ -300,6 +318,10 @@ describe("report", () => {
 
     expect(formatReport(buildReport(config, incoming, { withoutTrack, withoutYearRow }, changes, [7, 8]))).toContain(
       "| Waiting for a later run (Spotify budget) | 2 (cards 7, 8) |",
+    );
+    const checked = incoming.map((c) => ({ ...c, musicbrainzYear: c.cardNumber === 1 ? 1975 : c.cardYear }));
+    expect(formatReport(buildReport(config, checked, { withoutTrack, withoutYearRow }, changes))).toContain(
+      "| Years MusicBrainz disagrees with | 1 (card 1: 1974, MusicBrainz 1975) |",
     );
     const many = formatReport({ ...report, uncertainYears: Array.from({ length: 21 }, (_, i) => i + 1) });
     expect(many).toContain("| Uncertain years | 21 |");
