@@ -1,11 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
+  buyCard,
+  canBuy,
+  canSkip,
   currentSong,
   isNewRecord,
   outcomeOf,
+  MAX_TOKENS,
   placeCard,
+  rightGap as gapFor,
+  skipSong,
   songsNeeded,
+  START_TOKENS,
   startSolo,
+  tokensOf,
+  winsCard,
+  type Naming,
   type SoloState,
   type TimelineCard,
 } from "./state";
@@ -18,10 +28,13 @@ function game(deckYears: number[]): { state: SoloState; cards: TimelineCard[] } 
 }
 
 // The gap where `year` fits, so a test can play right every time.
-const rightGap = (state: SoloState, year: number) => {
-  const i = state.timeline.findIndex((c) => c.year > year);
-  return i === -1 ? state.timeline.length : i;
-};
+const rightGap = (state: SoloState, year: number) => gapFor(state.timeline, year);
+
+const named = (artistCorrect: boolean, titleCorrect: boolean, yearExact = false): Naming => ({
+  artistCorrect,
+  titleCorrect,
+  yearExact,
+});
 
 describe("startSolo", () => {
   it("puts the starting card on the timeline and plays the second song", () => {
@@ -98,5 +111,139 @@ describe("isNewRecord", () => {
     expect(isNewRecord(11, 12)).toBe(true);
     expect(isNewRecord(12, 12)).toBe(false);
     expect(isNewRecord(13, 12)).toBe(false);
+  });
+});
+
+describe("winsCard", () => {
+  it("lets the placement decide in Original", () => {
+    expect(winsCard("original", true, named(false, false))).toBe(true);
+    expect(winsCard("original", false, named(true, true, true))).toBe(false);
+  });
+
+  it("needs artist and title as well in Pro", () => {
+    expect(winsCard("pro", true, named(true, true))).toBe(true);
+    expect(winsCard("pro", true, named(false, true))).toBe(false);
+    expect(winsCard("pro", true, named(true, false))).toBe(false);
+    expect(winsCard("pro", false, named(true, true))).toBe(false);
+  });
+
+  it("needs the exact year as well in Expert", () => {
+    expect(winsCard("expert", true, named(true, true, true))).toBe(true);
+    expect(winsCard("expert", true, named(true, true, false))).toBe(false);
+    expect(winsCard("expert", true, named(false, true, true))).toBe(false);
+    expect(winsCard("expert", false, named(true, true, true))).toBe(false);
+  });
+});
+
+describe("tokens", () => {
+  it("starts with two", () => {
+    const { state } = game([1980, 1970, 2000]);
+    expect(tokensOf(state)).toBe(START_TOKENS);
+    expect(START_TOKENS).toBe(2);
+  });
+
+  it("counts a game from before tokens as two", () => {
+    const { state } = game([1980, 1970, 2000]);
+    expect(tokensOf({ ...state, tokens: undefined })).toBe(2);
+  });
+
+  it("earns one for artist and title, even when the placement is wrong", () => {
+    const { state, cards } = game([1980, 1970, 2000]);
+    const move = placeCard(state, 1, cards[1], "original", named(true, true));
+    expect(move.correct).toBe(false);
+    expect(move.tokenChange).toBe(1);
+    expect(tokensOf(move.state)).toBe(3);
+  });
+
+  it("earns nothing for only one of the two", () => {
+    const { state, cards } = game([1980, 1970, 2000]);
+    expect(placeCard(state, 0, cards[1], "original", named(true, false)).tokenChange).toBe(0);
+    expect(placeCard(state, 0, cards[1], "original", named(false, true)).tokenChange).toBe(0);
+  });
+
+  it("holds at most five", () => {
+    const { state, cards } = game([1980, 1970, 2000]);
+    const full = { ...state, tokens: MAX_TOKENS };
+    const move = placeCard(full, 0, cards[1], "original", named(true, true));
+    expect(move.tokenChange).toBe(0);
+    expect(tokensOf(move.state)).toBe(MAX_TOKENS);
+  });
+});
+
+describe("placeCard in Pro and Expert", () => {
+  it("discards a right placement in Pro when the artist is wrong", () => {
+    const { state, cards } = game([1980, 1970, 2000]);
+    const move = placeCard(state, 0, cards[1], "pro", named(false, true));
+    expect(move.correct).toBe(true);
+    expect(move.won).toBe(false);
+    expect(move.state.timeline.map((c) => c.year)).toEqual([1980]);
+    expect(move.state.placed).toBe(1);
+  });
+
+  it("keeps the card in Pro when everything is right", () => {
+    const { state, cards } = game([1980, 1970, 2000]);
+    const move = placeCard(state, 0, cards[1], "pro", named(true, true));
+    expect(move.won).toBe(true);
+    expect(move.state.timeline.map((c) => c.year)).toEqual([1970, 1980]);
+  });
+
+  it("discards the card in Expert when the year is off", () => {
+    const { state, cards } = game([1980, 1970, 2000]);
+    expect(placeCard(state, 0, cards[1], "expert", named(true, true, false)).won).toBe(false);
+    expect(placeCard(state, 0, cards[1], "expert", named(true, true, true)).won).toBe(true);
+  });
+});
+
+describe("skipSong", () => {
+  it("costs one token and plays the next song without placing", () => {
+    const { state } = game([1980, 1970, 2000]);
+    const skipped = skipSong(state);
+    expect(tokensOf(skipped)).toBe(1);
+    expect(currentSong(skipped)).toBe("s2");
+    expect(skipped.timeline).toEqual(state.timeline);
+    expect(skipped.placed).toBe(1);
+  });
+
+  it("refuses without a token", () => {
+    const { state } = game([1980, 1970, 2000]);
+    const broke = { ...state, tokens: 0 };
+    expect(canSkip(broke)).toBe(false);
+    expect(() => skipSong(broke)).toThrow();
+  });
+
+  it("can empty the deck", () => {
+    const { state } = game([1980, 1970]);
+    expect(outcomeOf(skipSong(state))).toBe("deck_empty");
+  });
+});
+
+describe("buyCard", () => {
+  it("costs three tokens and puts the card at its right spot", () => {
+    const { state, cards } = game([1980, 1970, 1990]);
+    const rich = { ...state, tokens: 4 };
+    const move = buyCard(rich, cards[1]);
+    expect(move.won).toBe(true);
+    expect(move.tokenChange).toBe(-3);
+    expect(tokensOf(move.state)).toBe(1);
+    expect(move.state.timeline.map((c) => c.year)).toEqual([1970, 1980]);
+    expect(move.gap).toBe(0);
+    expect(currentSong(move.state)).toBe("s2");
+  });
+
+  it("refuses with fewer than three tokens", () => {
+    const { state, cards } = game([1980, 1970, 1990]);
+    expect(canBuy(state)).toBe(false);
+    expect(() => buyCard(state, cards[1])).toThrow();
+  });
+
+  it("refuses a song that is not playing", () => {
+    const { state, cards } = game([1980, 1970, 1990]);
+    expect(() => buyCard({ ...state, tokens: 3 }, cards[2])).toThrow();
+  });
+
+  it("can win the game", () => {
+    const { state, cards } = game([1980, 1970, 1990]);
+    const nine = { ...state, tokens: 3, timeline: Array.from({ length: 9 }, (_, i) => card(`t${i}`, 1950 + i)) };
+    expect(buyCard(nine, cards[1]).outcome).toBe("won");
   });
 });

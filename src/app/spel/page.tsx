@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { findActiveGame } from "@/lib/game/games";
+import { findActiveGame, personalBest } from "@/lib/game/games";
 import { WINNING_CARDS } from "@/lib/game/state";
 import { createClient } from "@/lib/supabase/server";
 import { EditionPicker, type EditionOption } from "../oefenen/edition-picker";
@@ -17,15 +17,28 @@ const problems: Record<string, string> = {
 };
 
 const variants = [
-  { id: "original", name: "Original", hint: "Alleen de plek op de tijdlijn", ready: true },
-  { id: "pro", name: "Pro", hint: "Plus artiest en titel", ready: false },
-  { id: "expert", name: "Expert", hint: "Plus het exacte jaar", ready: false },
-];
+  { id: "original", name: "Original", hint: "Alleen de plek op de tijdlijn" },
+  { id: "pro", name: "Pro", hint: "Plus artiest en titel" },
+  { id: "expert", name: "Expert", hint: "Plus het exacte jaar" },
+] as const;
 
-function Choice({ name, hint, checked, ready }: { name: string; hint: string; checked: boolean; ready: boolean }) {
+type ChoiceProps = {
+  name: string;
+  hint: string;
+  checked: boolean;
+  ready: boolean;
+  // With a field, the radio is part of the form; without, it only shows the one option there is.
+  field?: { name: string; value: string };
+};
+
+function Choice({ name, hint, checked, ready, field }: ChoiceProps) {
   return (
     <label className={`${shared.option} ${ready ? "" : styles.later}`}>
-      <input type="radio" checked={checked} disabled={!ready} readOnly />
+      {field ? (
+        <input type="radio" name={field.name} value={field.value} defaultChecked={checked} />
+      ) : (
+        <input type="radio" checked={checked} disabled={!ready} readOnly />
+      )}
       <span className={styles.radio} aria-hidden="true" />
       <span className={styles.choiceText}>
         <span className={shared.optionName}>{name}</span>
@@ -41,8 +54,9 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/spel">["searc
   const { data: claims } = await supabase.auth.getClaims();
   const playerId = claims?.claims.sub;
 
-  const [running, { data: editions, error }, { count: allCount, error: countError }] = await Promise.all([
+  const [running, bests, { data: editions, error }, { count: allCount, error: countError }] = await Promise.all([
     playerId ? findActiveGame(supabase, playerId) : null,
+    Promise.all(variants.map((v) => (playerId ? personalBest(supabase, playerId, v.id) : null))),
     supabase
       .from("edition_song_counts")
       .select("id, name, song_count")
@@ -81,8 +95,15 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/spel">["searc
       <fieldset className={shared.fieldset}>
         <legend className={shared.section}>Variant</legend>
         <div className={shared.list}>
-          {variants.map((v) => (
-            <Choice key={v.id} name={v.name} hint={v.hint} checked={v.id === "original"} ready={v.ready} />
+          {variants.map((v, i) => (
+            <Choice
+              key={v.id}
+              name={v.name}
+              hint={bests[i] === null ? v.hint : `${v.hint} · record ${bests[i]}`}
+              checked={v.id === "original"}
+              ready
+              field={{ name: "variant", value: v.id }}
+            />
           ))}
         </div>
       </fieldset>

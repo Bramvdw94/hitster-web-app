@@ -1,9 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RevealedSong } from "@/lib/practice/session";
-import type { SoloState, TimelineCard } from "./state";
+import type { SoloState, TimelineCard, Variant } from "./state";
 
-export type GameVariant = "original" | "pro" | "expert";
+export type GameVariant = Variant;
 
 export type Game = {
   id: string;
