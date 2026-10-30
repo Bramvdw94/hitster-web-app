@@ -245,8 +245,9 @@
   min-width: 0;
 }
 
-.title {
+.songTitle {
   font-weight: 700;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
@@ -264,4 +265,10 @@
 
 .known {
   color: var(--good);
+}
+
+.note {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
 }
