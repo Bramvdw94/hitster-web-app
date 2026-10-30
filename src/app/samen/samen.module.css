@@ -1,0 +1,180 @@
+/* Pass-and-play. Shared page, button and list styles come from oefenen.module.css. */
+
+/* Setup */
+
+.names {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+  list-style: none;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.remove {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Tokens and standings */
+
+.tokens {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.token {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--close);
+  border-radius: 50%;
+  background: rgba(255, 209, 102, 0.3);
+}
+
+.tokenLine {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.standings {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  list-style: none;
+}
+
+.standing {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.standing + .standing {
+  border-top: 1px solid var(--line);
+}
+
+.now {
+  background: rgba(255, 122, 61, 0.12);
+}
+
+.winner {
+  background: rgba(125, 255, 176, 0.12);
+}
+
+.standingName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standingTokens {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.standingCards {
+  flex: none;
+  width: 52px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1;
+  text-align: right;
+}
+
+.standingCards small {
+  color: var(--muted);
+  font-size: 16px;
+}
+
+/* One turn */
+
+.handover {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  padding: 18px 0;
+  text-align: center;
+}
+
+.handoverName {
+  overflow-wrap: anywhere;
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 54px;
+  line-height: 0.95;
+}
+
+.spend {
+  display: flex;
+  gap: 10px;
+}
+
+.taps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tapLabel {
+  margin-bottom: 8px;
+  font-weight: 800;
+}
+
+.tapButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.tapButton {
+  flex: 1;
+  padding: 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.tapGood {
+  border-color: var(--good);
+  background: rgba(125, 255, 176, 0.14);
+  color: var(--good);
+}
+
+.tapWrong {
+  border-color: var(--wrong);
+  background: rgba(255, 107, 138, 0.14);
+  color: var(--wrong);
+}
+
+.earned {
+  color: var(--close);
+  font-weight: 800;
+  text-align: center;
+}

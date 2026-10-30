@@ -16,14 +16,26 @@ type Props = {
   selected?: number | null;
   onSelect?: (gap: number) => void;
   disabled?: boolean;
+  // Gaps someone already picked, with their name: shown, but not tappable (a steal in #29).
+  taken?: Record<number, string>;
 };
 
 // The timeline ladder from #6: oldest at the top, a rail with dots, and dashed "Tussen 1973 en
 // 1994" gaps; the tapped gap turns into the orange "Hier plaatsen" target.
-export function TimelineLadder({ cards, selected = null, onSelect, disabled = false }: Props) {
+export function TimelineLadder({ cards, selected = null, onSelect, disabled = false, taken = {} }: Props) {
   const years = cards.map((c) => c.year);
 
   function gap(index: number) {
+    const takenBy = taken[index];
+    if (takenBy !== undefined) {
+      return (
+        <li key={`gap-${index}`}>
+          <span className={`${styles.gap} ${styles.taken}`}>
+            {takenBy} · {gapLabel(years, index)}
+          </span>
+        </li>
+      );
+    }
     if (!onSelect) return null;
     const isSelected = selected === index;
     return (

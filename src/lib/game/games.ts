@@ -2,17 +2,19 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RevealedSong } from "@/lib/practice/session";
 import type { SoloState, TimelineCard } from "./state";
+import type { TogetherState } from "./together";
 
 export type GameVariant = "original" | "pro" | "expert";
 
-export type Game = {
+// `state` is a SoloState in solo and a TogetherState in pass-and-play.
+export type Game<S = SoloState> = {
   id: string;
   owner_id: string;
   mode: "solo" | "pass_and_play";
   variant: GameVariant;
   edition_ids: string[];
   status: "active" | "finished" | "abandoned";
-  state: SoloState;
+  state: S;
   songs_needed: number | null;
   finished_at: string | null;
 };
@@ -20,24 +22,31 @@ export type Game = {
 const GAME_COLUMNS = "id, owner_id, mode, variant, edition_ids, status, state, songs_needed, finished_at";
 
 // With the player's client, RLS only finds their own game.
-export async function loadGame(supabase: SupabaseClient, gameId: string): Promise<Game | null> {
-  const { data, error } = await supabase.from("games").select(GAME_COLUMNS).eq("id", gameId).maybeSingle<Game>();
+export async function loadGame<S = SoloState>(supabase: SupabaseClient, gameId: string): Promise<Game<S> | null> {
+  const { data, error } = await supabase.from("games").select(GAME_COLUMNS).eq("id", gameId).maybeSingle<Game<S>>();
   if (error) throw error;
   return data;
 }
 
-export async function findActiveGame(
-  supabase: SupabaseClient,
-  playerId: string,
-): Promise<Pick<Game, "id" | "state"> | null> {
+export type ActiveGame =
+  | (Pick<Game, "id" | "state"> & { mode: "solo" })
+  | (Pick<Game<TogetherState>, "id" | "state"> & { mode: "pass_and_play" });
+
+// The one game a player has running, solo or pass-and-play.
+export async function findActiveGame(supabase: SupabaseClient, playerId: string): Promise<ActiveGame | null> {
   const { data, error } = await supabase
     .from("games")
-    .select("id, state")
+    .select("id, mode, state")
     .eq("owner_id", playerId)
     .eq("status", "active")
-    .maybeSingle<Pick<Game, "id" | "state">>();
+    .maybeSingle<ActiveGame>();
   if (error) throw error;
   return data;
+}
+
+// Where a running game is played.
+export function gamePath(game: Pick<Game, "id" | "mode">): string {
+  return game.mode === "solo" ? `/spel/${game.id}` : `/samen/${game.id}`;
 }
 
 // The fewest songs over the player's won solo games in this variant. `before` limits it to

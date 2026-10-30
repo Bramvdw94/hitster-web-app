@@ -80,7 +80,8 @@ async function GameView({ params }: { params: PageProps<"/spel/[id]">["params"] 
 
   const supabase = await createClient();
   const game = await loadGame(supabase, id);
-  if (!game || game.mode !== "solo") notFound();
+  if (!game) notFound();
+  if (game.mode === "pass_and_play") redirect(`/samen/${id}`);
   // Replaced by a newer game.
   if (game.status === "abandoned") redirect("/spel");
   if (game.status === "finished") return <Result game={game} />;
