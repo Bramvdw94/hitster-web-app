@@ -123,12 +123,34 @@ function Editions({ editions }: { editions: MyStats["editions"] }) {
   );
 }
 
-// Personal bests per variant arrive with the solo game (#27).
-function Solo() {
+const VARIANTS = [
+  { key: "original", name: "Original" },
+  { key: "pro", name: "Pro" },
+  { key: "expert", name: "Expert" },
+] as const;
+
+// Personal best per variant: the fewest songs needed to reach 10 cards. Solo only.
+function Solo({ solo }: { solo: MyStats["solo"] }) {
   return (
     <section className={styles.panel} aria-label="Spelmodus">
       <p className={styles.label}>Spelmodus solo · record</p>
-      <p className={styles.foot}>Je records verschijnen hier zodra de spelmodus er is.</p>
+      <ul className={styles.records}>
+        {VARIANTS.map(({ key, name }) => {
+          const record = solo.find((r) => r.variant === key);
+          const games = record?.games ?? 0;
+          return (
+            <li key={key} className={record?.best ? styles.record : `${styles.record} ${styles.noRecord}`}>
+              <span className={styles.variant}>{name}</span>
+              <b>{record?.best ?? "–"}</b>
+              <span>
+                {games === 0
+                  ? "nog niet gespeeld"
+                  : `${record?.best ? "nummers tot 10 · " : ""}${games} ${games === 1 ? "potje" : "potjes"}`}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
@@ -216,7 +238,7 @@ async function Stats() {
       ) : null}
       {stats.decades.length > 0 ? <Decades decades={stats.decades} /> : null}
       <Editions editions={stats.editions} />
-      <Solo />
+      <Solo solo={stats.solo} />
       <Hardest songs={stats.hardest} weakCount={weakCount} />
     </>
   );
