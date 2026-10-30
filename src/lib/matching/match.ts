@@ -104,8 +104,16 @@ export function stripTitleSuffixes(title: string): string {
   return TITLE_SUFFIXES.reduce((t, suffix) => t.replace(suffix, ""), title).trim();
 }
 
+// A long title is distinctive, so it may take one typo more: "the rthymn of the night"
+// (4 edits in 16 letters) passes, while short look-alikes such as "titanium" for
+// "Titanic" still fail.
+const LONG_TITLE = 12;
+const LONG_TITLE_THRESHOLD = 0.75;
+
 export function matchTitle(guess: string, title: string): boolean {
   const g = normalise(stripTitleSuffixes(guess));
   if (g === "") return false;
-  return similarity(g, normalise(stripTitleSuffixes(title))) >= MATCH_THRESHOLD;
+  const t = normalise(stripTitleSuffixes(title));
+  const threshold = t.replace(/ /g, "").length >= LONG_TITLE ? LONG_TITLE_THRESHOLD : MATCH_THRESHOLD;
+  return similarity(g, t) >= threshold;
 }

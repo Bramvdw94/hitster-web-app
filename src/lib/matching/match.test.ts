@@ -122,6 +122,15 @@ describe("matchTitle", () => {
     expect(matchTitle("bohemian rapsody", "Bohemian Rhapsody")).toBe(true);
   });
 
+  it("tolerates more typos in a long title", () => {
+    expect(matchTitle("The Rthymn of the night", "The Rhythm Of The Night")).toBe(true);
+  });
+
+  it("keeps a short title strict", () => {
+    expect(matchTitle("rain", "Pain")).toBe(false);
+    expect(matchTitle("titanik", "Titanic")).toBe(true);
+  });
+
   it("rejects a different title", () => {
     expect(matchTitle("under preasure", "Bohemian Rhapsody")).toBe(false);
     expect(matchTitle("titanium", "Titanic")).toBe(false);
