@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { filterQuery, parseFilter } from "@/lib/practice/filter";
 import { dealSession, dealWeakSession } from "@/lib/practice/mix";
 import { loadCandidates, loadDecadeStats, recordAttempt } from "@/lib/practice/progress";
 import { scoreAnswer, type YearResult } from "@/lib/practice/scoring";
@@ -13,12 +14,20 @@ const MAX_YEAR = 2100;
 const MAX_ARTIST_LENGTH = 200;
 
 // "Start" and "Nog een ronde". No ticked edition means Alles. With `zwak` set it is
-// "Oefen mijn zwakke nummers": box 1-2 songs from every edition.
+// "Oefen mijn zwakke nummers": box 1-2 songs from every edition. `artiest`, `van` and `tot`
+// narrow either to one artist and/or a range of card years (src/lib/practice/filter.ts).
 export async function startPractice(formData: FormData) {
   const weakOnly = formData.get("zwak") === "1";
+  const filter = parseFilter((name) => formData.get(name));
   const editionIds = weakOnly
     ? []
     : formData.getAll("edition").filter((v): v is string => typeof v === "string" && v !== "");
+  // Back to the start screen with the filter still filled in.
+  const back = (problem: string) => {
+    const params = new URLSearchParams(filterQuery(filter).slice(1));
+    params.set("fout", problem);
+    return `/oefenen?${params}`;
+  };
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const playerId = claims?.claims.sub;
@@ -32,22 +41,25 @@ export async function startPractice(formData: FormData) {
       .eq("id", playerId)
       .single<{ practice_session_count: number }>();
     if (error) throw error;
-    const candidates = await loadCandidates(supabase, editionIds, weakOnly);
+    const candidates = await loadCandidates(supabase, editionIds, weakOnly, filter);
     songIds = weakOnly
       ? dealWeakSession(candidates, Math.random)
       : dealSession(candidates, await loadDecadeStats(supabase), profile.practice_session_count + 1, Math.random);
   } catch {
-    redirect("/oefenen?fout=starten");
+    redirect(back("starten"));
   }
 
   const { data, error } = await supabase.rpc("start_practice_session", {
     p_edition_ids: editionIds,
     p_weak_only: weakOnly,
     p_song_ids: songIds,
+    p_artist_id: filter.artistId,
+    p_year_from: filter.yearFrom,
+    p_year_to: filter.yearTo,
   });
   if (error) {
     const problem = error.code !== "P0002" ? "starten" : weakOnly ? "geen_zwakke" : "geen_nummers";
-    redirect(`/oefenen?fout=${problem}`);
+    redirect(back(problem));
   }
   redirect(`/oefenen/${data as string}`);
 }

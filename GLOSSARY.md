@@ -91,6 +91,18 @@ A song in box 5 for that player.
 **Weak song**:
 A song in a low box for that player; due again sooner.
 
+**Practice filter**:
+One artist and/or a range of card years (a decade is a range of ten) that narrows which songs a practice session deals. Combines with the chosen editions; the session mix still applies within it.
+_Avoid_: Mode, category
+
+**Years off** (jaren ernaast):
+The average of how many years a player's guessed years were off the card year, per song, decade or artist. Only attempts with a year count, so "Ken ik niet" and placements without a typed year are left out.
+_Avoid_: Error, deviation
+
+**Ontdek**:
+The page that shows the playable songs of an artist, decade or year range on a timeline, oldest first.
+_Avoid_: Browse, library
+
 **Catalogue import**:
 The repeatable script that loads editions, cards and songs into the database from the snapshotted sources.
 _Avoid_: Sync, seed

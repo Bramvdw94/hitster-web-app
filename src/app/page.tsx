@@ -88,6 +88,15 @@ export default function Home() {
             </Link>
           </li>
           <li>
+            <Link href="/ontdek" className={styles.entry}>
+              <span className={styles.entryText}>
+                <span className={styles.entryTitle}>Ontdek</span>
+                <span className={styles.entryHint}>Zoek op artiest, decennium of jaar en zie de tijdlijn.</span>
+              </span>
+              <span className={styles.go}>Zoek</span>
+            </Link>
+          </li>
+          <li>
             <Link href="/voortgang" className={styles.entry}>
               <span className={styles.entryText}>
                 <span className={styles.entryTitle}>Mijn voortgang</span>

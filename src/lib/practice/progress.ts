@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { boxBefore, dueInterval, nextBox, nextBoxAfterPlacement } from "./leitner";
+import { NO_FILTER, type PracticeFilter } from "./filter";
 import type { Candidate, DecadeStat } from "./mix";
 
 export type AttemptInput = {
@@ -60,15 +61,19 @@ export async function recordAttempt(admin: SupabaseClient, input: AttemptInput):
 }
 
 // Playable songs in the editions (empty = Alles) with the player's box; weak only = box 1-2
-// across every edition. With the player's client.
+// across every edition. The filter (artist, years) narrows both. With the player's client.
 export async function loadCandidates(
   supabase: SupabaseClient,
   editionIds: string[],
   weakOnly = false,
+  filter: PracticeFilter = NO_FILTER,
 ): Promise<Candidate[]> {
   const { data, error } = await supabase.rpc("practice_candidates", {
     p_edition_ids: editionIds,
     p_weak_only: weakOnly,
+    p_artist_id: filter.artistId,
+    p_year_from: filter.yearFrom,
+    p_year_to: filter.yearTo,
   });
   if (error) throw error;
   return data as Candidate[];

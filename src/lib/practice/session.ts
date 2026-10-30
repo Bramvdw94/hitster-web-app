@@ -10,6 +10,10 @@ export type PracticeSession = {
   weak_only: boolean;
   song_ids: string[];
   status: "active" | "finished";
+  // The filter it was dealt with (src/lib/practice/filter.ts); null means none.
+  artist_id: string | null;
+  year_from: number | null;
+  year_to: number | null;
 };
 
 export type SessionAttempt = {
@@ -32,7 +36,7 @@ export type SessionState = {
 export async function loadSession(supabase: SupabaseClient, sessionId: string): Promise<SessionState | null> {
   const { data: session, error } = await supabase
     .from("practice_sessions")
-    .select("id, player_id, session_number, edition_ids, weak_only, song_ids, status")
+    .select("id, player_id, session_number, edition_ids, weak_only, song_ids, status, artist_id, year_from, year_to")
     .eq("id", sessionId)
     .maybeSingle<PracticeSession>();
   if (error) throw error;

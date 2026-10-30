@@ -373,3 +373,16 @@
   font-size: 30px;
   line-height: 1;
 }
+
+/* Jaren ernaast */
+
+.off {
+  grid-column: 2 / -1;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.list li:first-child .item {
+  padding-top: 0;
+  border-top: 0;
+}

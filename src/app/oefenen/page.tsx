@@ -1,18 +1,22 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { ArtistSearch } from "@/components/artist-search/artist-search";
+import { artistName, catalogueYears } from "@/lib/explore/explore";
+import { decadesBetween, fromSearchParams } from "@/lib/practice/filter";
 import { loadCandidates } from "@/lib/practice/progress";
 import { SESSION_SIZE } from "@/lib/practice/scoring";
 import { findActiveSessionId } from "@/lib/practice/session";
 import { createClient } from "@/lib/supabase/server";
 import { startPractice } from "./actions";
 import { EditionPicker, type EditionOption } from "./edition-picker";
+import { PeriodPicker } from "./period-picker";
 import styles from "./oefenen.module.css";
 
 export const metadata = { title: "Oefenen · Jaartal" };
 
 const problems: Record<string, string> = {
-  geen_nummers: "Er zijn geen speelbare nummers in deze edities.",
+  geen_nummers: "Er zijn geen speelbare nummers met deze keuze.",
   geen_zwakke: "Je hebt nu geen zwakke nummers.",
   starten: "De oefenronde kon niet starten. Probeer het nog eens.",
 };
@@ -25,7 +29,10 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/oefenen">["se
   const activeId = playerId ? await findActiveSessionId(supabase, playerId) : null;
   if (activeId) redirect(`/oefenen/${activeId}`);
 
-  const [{ data: editions, error }, { count: allCount, error: countError }, weakSongs] = await Promise.all([
+  const params = await searchParams;
+  // Ontdek and a failed start link here with the filter filled in.
+  const filter = fromSearchParams(params);
+  const [{ data: editions, error }, { count: allCount, error: countError }, weakSongs, years, artist] = await Promise.all([
     supabase
       .from("edition_song_counts")
       .select("id, name, song_count")
@@ -34,11 +41,13 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/oefenen">["se
       .returns<EditionOption[]>(),
     supabase.from("playable_songs").select("id", { count: "exact", head: true }),
     loadCandidates(supabase, [], true),
+    catalogueYears(supabase),
+    artistName(supabase, filter.artistId),
   ]);
   if (error) throw error;
   if (countError) throw countError;
 
-  const { fout } = await searchParams;
+  const { fout } = params;
   const problem = typeof fout === "string" ? problems[fout] : undefined;
 
   return (
@@ -50,6 +59,17 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/oefenen">["se
           </p>
         ) : null}
         <EditionPicker editions={editions} allCount={allCount ?? 0} />
+        <div className={styles.filter}>
+          <fieldset className={styles.fieldset}>
+            <legend className={styles.section}>Artiest</legend>
+            <ArtistSearch mode="field" initial={artist && filter.artistId ? { id: filter.artistId, name: artist } : null} />
+          </fieldset>
+          <PeriodPicker
+            decades={decadesBetween(years.oldest, years.newest)}
+            initialFrom={filter.yearFrom}
+            initialTo={filter.yearTo}
+          />
+        </div>
         <button type="submit" className={styles.cta} disabled={!allCount}>
           Start oefenen
         </button>
@@ -78,7 +98,8 @@ export default function PracticePage({ searchParams }: PageProps<"/oefenen">) {
         </Link>
         <h1 className={styles.title}>Oefenen</h1>
         <p className={styles.hint}>
-          15 nummers. Raad het jaar en, als je het weet, de artiest. Kies je edities.
+          15 nummers. Raad het jaar en, als je het weet, de artiest. Kies je edities, en als je wilt
+          een artiest of periode.
         </p>
       </header>
       <Suspense fallback={<div className={styles.placeholder} />}>

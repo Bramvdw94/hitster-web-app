@@ -26,7 +26,7 @@ Settled with Bram on 2026-10-29 in [Define the data model and song import](https
 |---|---|---|
 | `profiles` | A player, i.e. a Supabase Auth user (Spotify login) | `id` (= `auth.users.id`), `display_name`, `is_admin`, `practice_session_count` |
 | `song_progress` | Leitner state per player per song | `player_id`, `song_id`, `box` (1–5), `last_seen_session`, `due_at_session` |
-| `practice_sessions` | A practice session of 15 songs | `id`, `player_id`, `session_number`, `edition_ids` (empty = Alles), `weak_only`, `song_ids` (the 15, in order), `status` (`active` / `finished`), `started_at`, `finished_at` |
+| `practice_sessions` | A practice session of 15 songs | `id`, `player_id`, `session_number`, `edition_ids` (empty = Alles), `weak_only`, `artist_id` / `year_from` / `year_to` (the practice filter, null = none), `song_ids` (the 15, in order), `status` (`active` / `finished`), `started_at`, `finished_at` |
 | `games` | A game in game mode | `id`, `owner_id`, `mode` (`solo` / `pass_and_play`), `variant` (`original` / `pro` / `expert`), `edition_ids`, `status`, `state jsonb` (timelines, tokens, deck, turn, opponent names), `songs_needed` (solo score), timestamps |
 | `attempts` | One answer to one song | `id`, `player_id`, `song_id`, `practice_session_id` or `game_id`, `guessed_year`, `year_diff`, `artist_input`, `artist_correct`, `dont_know`, `points`, `box_before`, `box_after`, `answered_at` |
 
@@ -35,6 +35,7 @@ Settled with Bram on 2026-10-29 in [Define the data model and song import](https
 - A solo placement writes an attempt with `game_id` set (`guessed_year` null, `points` 0) and `placed_correctly` through `record_attempt`, like a practice answer. A right placement moves the song up a box, a wrong one sends it to box 1. Each attempt has exactly one of `practice_session_id` and `game_id`; the decade weighting (`practice_decade_stats`) only counts practice answers, and "Mijn voortgang" counts a right placement as close.
 - Pass-and-play opponents are names inside `games.state`, not accounts, and are kept only while the game runs. They create no `attempts`, since only solo feeds weak songs (#5).
 - Players never write `practice_sessions` or `attempts` themselves. `start_practice_session(edition_ids)` deals a session (or returns the running one: at most one `active` session per player) and counts it in `practice_session_count`; the answer server action scores on the server and writes the attempt with the secret key, so points can't be faked.
+- Practice filter, years off and Ontdek read the catalogue live through `practice_candidates`, `find_artists` (substring plus trigram similarity, accents ignored), `explore_songs` (at most 400 songs per call, oldest first) and `get_my_years_off`, so newly imported songs and artists need no extra step.
 - `attempts.year_diff` is the guessed year minus the card year, so negative means too early. `guessed_year` and `year_diff` are null for "Ken ik niet".
 - The view `edition_song_counts` gives the number of playable songs per edition for the edition list.
 - The stats screen (still open on the map) reads from `attempts` and `song_progress`, so no counter tables are needed.

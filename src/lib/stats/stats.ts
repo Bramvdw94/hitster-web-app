@@ -26,6 +26,20 @@ export type MyStats = {
   }[];
 };
 
+// get_my_years_off(): the average years off over the last 50 guessed years, per decade and for
+// the 10 artists (with at least 3 guesses) the player misses by the most.
+export type YearsOff = {
+  decades: { decade: number; guesses: number; avgOff: number }[];
+  artists: { id: string; name: string; guesses: number; avgOff: number }[];
+};
+
+// "gem. 2,3 jaar ernaast", "gem. 1 jaar ernaast", "gem. precies goed".
+export function yearsOffText(avgOff: number): string {
+  if (avgOff === 0) return "gem. precies goed";
+  const value = avgOff.toLocaleString("nl-NL", { maximumFractionDigits: 1 });
+  return `gem. ${value} jaar ernaast`;
+}
+
 const TIME_ZONE = "Europe/Amsterdam";
 
 // The calendar date in Amsterdam, as days since 1970, so the countdown flips at local midnight.
