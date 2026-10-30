@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { TimelineLadder } from "@/components/timeline-ladder/timeline-ladder";
 import { loadGame, personalBest, type Game } from "@/lib/game/games";
-import { currentSong, isNewRecord, WINNING_CARDS } from "@/lib/game/state";
+import { currentSong, isNewRecord, tokensOf, VARIANT_NAMES, WINNING_CARDS } from "@/lib/game/state";
 import { trackIdOf } from "@/lib/practice/session";
 import { createClient } from "@/lib/supabase/server";
 import { canCorrectYears } from "@/lib/year-correction/actions";
@@ -28,7 +28,7 @@ async function Result({ game }: { game: Game }) {
   return (
     <>
       <section className={shared.total} aria-label="Score">
-        <p className={shared.section}>Solo · Original</p>
+        <p className={shared.section}>Solo · {VARIANT_NAMES[game.variant]}</p>
         {score === null ? (
           <>
             <p className={styles.verdict}>De stapel is op</p>
@@ -59,6 +59,7 @@ async function Result({ game }: { game: Game }) {
 
       <div className={shared.actions}>
         <form action={startSoloGame}>
+          <input type="hidden" name="variant" value={game.variant} />
           {game.edition_ids.map((id) => (
             <input key={id} type="hidden" name="edition" value={id} />
           ))}
@@ -92,7 +93,9 @@ async function GameView({ params }: { params: PageProps<"/spel/[id]">["params"] 
     <SoloTurn
       key={game.state.placed}
       gameId={id}
+      variant={game.variant}
       placed={game.state.placed}
+      tokens={tokensOf(game.state)}
       timeline={game.state.timeline}
       trackId={await trackIdOf(supabase, songId)}
       canCorrectYears={await canCorrectYears()}

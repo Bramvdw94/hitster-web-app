@@ -5,15 +5,19 @@ import { useRouter } from "next/navigation";
 import { RecordPlayer } from "@/components/record-player/record-player";
 import { TimelineLadder, type LadderCard } from "@/components/timeline-ladder/timeline-ladder";
 import { YearCorrection } from "@/components/year-correction/year-correction";
-import { WINNING_CARDS, type TimelineCard } from "@/lib/game/state";
+import { DEFAULT_YEAR } from "@/components/year-ruler/ruler";
+import { YearRuler } from "@/components/year-ruler/year-ruler";
+import { BUY_COST, MAX_TOKENS, SKIP_COST, WINNING_CARDS, type TimelineCard, type Variant } from "@/lib/game/state";
 import { usePlayback } from "@/lib/playback/use-playback";
-import { placeSoloCard, type PlacementReveal } from "../actions";
+import { buySoloCard, placeSoloCard, skipSoloSong, type PlacementReveal, type PlacementResult } from "../actions";
 import shared from "../../oefenen/oefenen.module.css";
 import styles from "../spel.module.css";
 
 type Props = {
   gameId: string;
+  variant: Variant;
   placed: number;
+  tokens: number;
   timeline: TimelineCard[];
   trackId: string;
   // Bram sees "Jaar klopt niet" on the reveal.
@@ -21,56 +25,94 @@ type Props = {
 };
 
 const problemText = {
-  verouderd: "Dit nummer was al geplaatst. Je gaat verder bij het volgende.",
-  mislukt: "Je plaatsing kwam niet aan. Probeer het nog eens.",
+  verouderd: "Dit nummer was al gespeeld. Je gaat verder bij het volgende.",
+  mislukt: "Je zet kwam niet aan. Probeer het nog eens.",
 } as const;
 
 const toLadder = (cards: TimelineCard[]): LadderCard[] => cards.map((c) => ({ key: c.songId, ...c }));
 
-// The timeline with the revealed card where it was put: green when right, red when wrong.
+// The timeline with the revealed card where it was put: green when won, red when discarded.
+// A skipped song never touches the timeline.
 function revealLadder(reveal: PlacementReveal): LadderCard[] {
+  const cards = toLadder(reveal.timeline);
+  if (reveal.kind === "skipped") return cards;
   const placedCard: LadderCard = {
     key: reveal.songId,
     year: reveal.cardYear,
     title: reveal.title,
     artist: reveal.artist,
-    mark: reveal.correct ? "good" : "wrong",
+    mark: reveal.won ? "good" : "wrong",
   };
-  const cards = toLadder(reveal.timeline);
   return [...cards.slice(0, reveal.gap), placedCard, ...cards.slice(reveal.gap)];
 }
 
-// The timeline the next turn starts from: a right card stays, a wrong one is discarded.
+// The timeline the next turn starts from: a won card stays, anything else is gone.
 function timelineAfter(reveal: PlacementReveal): TimelineCard[] {
-  if (!reveal.correct) return reveal.timeline;
+  if (!reveal.won) return reveal.timeline;
   const card = { songId: reveal.songId, year: reveal.cardYear, title: reveal.title, artist: reveal.artist };
   return [...reveal.timeline.slice(0, reveal.gap), card, ...reveal.timeline.slice(reveal.gap)];
 }
 
-// One turn after another: listen, tap a gap in the timeline, place, then the sleeve reveal.
-// The server checks every placement; this only shows what it sends back.
+function verdictOf(reveal: PlacementReveal): string {
+  if (reveal.kind === "skipped") return "Overgeslagen";
+  if (reveal.kind === "bought") return "Gekocht";
+  if (reveal.variant === "original") return reveal.correct ? "Goed geplaatst" : "Verkeerde plek";
+  if (reveal.won) return "Kaart gewonnen";
+  return reveal.correct ? "Kaart weg" : "Verkeerde plek";
+}
+
+function yearText(guessed: number, cardYear: number): string {
+  const off = Math.abs(guessed - cardYear);
+  return off === 0 ? "Precies" : `${off} jaar ernaast`;
+}
+
+const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
+
+// Small counters above the timeline: one coin per token, out of the five you can hold.
+function Tokens({ count }: { count: number }) {
+  return (
+    <p className={styles.tokens} aria-label={`${count} van ${MAX_TOKENS} tokens`}>
+      <span className={styles.tokensLabel}>Tokens</span>
+      {Array.from({ length: MAX_TOKENS }, (_, i) => (
+        <span key={i} className={`${styles.token} ${i < count ? styles.tokenOn : ""}`} aria-hidden="true" />
+      ))}
+    </p>
+  );
+}
+
+function Mark({ right }: { right: boolean }) {
+  return <dd className={right ? shared.good : shared.wrong}>{right ? "Goed" : "Fout"}</dd>;
+}
+
+// One turn after another: listen, maybe type artist and title (and the year in Expert), tap a
+// gap and place, or spend tokens to skip or buy; then the sleeve reveal. The server checks
+// every move; this only shows what it sends back.
 export function SoloTurn(props: Props) {
   const router = useRouter();
   const playback = usePlayback();
   const [placed, setPlaced] = useState(props.placed);
+  const [tokens, setTokens] = useState(props.tokens);
   const [timeline, setTimeline] = useState(props.timeline);
   const [trackId, setTrackId] = useState(props.trackId);
   const [started, setStarted] = useState(false);
   const [gap, setGap] = useState<number | null>(null);
+  const [artist, setArtist] = useState("");
+  const [title, setTitle] = useState("");
+  const [year, setYear] = useState(DEFAULT_YEAR);
   const [reveal, setReveal] = useState<PlacementReveal | null>(null);
   const [problem, setProblem] = useState<keyof typeof problemText | null>(null);
   const [pending, startTransition] = useTransition();
+  const expert = props.variant === "expert";
 
   function startSong() {
     playback.play(trackId);
     setStarted(true);
   }
 
-  function place() {
-    if (gap === null) return;
+  function play(move: () => Promise<PlacementResult>) {
     setProblem(null);
     startTransition(async () => {
-      const result = await placeSoloCard(props.gameId, placed, gap);
+      const result = await move();
       if (result.ok) {
         setReveal(result.reveal);
         return;
@@ -79,6 +121,11 @@ export function SoloTurn(props: Props) {
       // Another tab or a double tap got there first: reload the game where it really is.
       if (result.problem === "verouderd") router.refresh();
     });
+  }
+
+  function place() {
+    if (gap === null) return;
+    play(() => placeSoloCard(props.gameId, placed, gap, { artist, title, year: expert ? year : null }));
   }
 
   function next() {
@@ -92,14 +139,19 @@ export function SoloTurn(props: Props) {
     playback.play(reveal.nextTrackId);
     setTimeline(timelineAfter(reveal));
     setPlaced(reveal.placed);
+    setTokens(reveal.tokens);
     setTrackId(reveal.nextTrackId);
     setStarted(true);
     setGap(null);
+    setArtist("");
+    setTitle("");
+    setYear(DEFAULT_YEAR);
     setReveal(null);
   }
 
   if (reveal) {
     const cards = timelineAfter(reveal).length;
+    const naming = reveal.naming;
     return (
       <>
         <p className={shared.status}>
@@ -110,8 +162,8 @@ export function SoloTurn(props: Props) {
             <b>{cards}</b> van {WINNING_CARDS} kaarten
           </span>
         </p>
-        <p className={`${styles.verdict} ${reveal.correct ? shared.good : shared.wrong}`}>
-          {reveal.correct ? "Goed geplaatst" : "Verkeerde plek"}
+        <p className={`${styles.verdict} ${reveal.won ? shared.good : reveal.kind === "skipped" ? "" : shared.wrong}`}>
+          {verdictOf(reveal)}
         </p>
 
         <section className={shared.sleeve} aria-label="Het nummer">
@@ -132,6 +184,37 @@ export function SoloTurn(props: Props) {
             ) : null}
           </div>
         </section>
+
+        <dl className={shared.scoreboard}>
+          {naming ? (
+            <>
+              <div>
+                <dt>Plek</dt>
+                <Mark right={reveal.correct} />
+              </div>
+              <div>
+                <dt>Artiest (jij: {naming.artistInput || "leeg"})</dt>
+                <Mark right={naming.artistCorrect} />
+              </div>
+              <div>
+                <dt>Titel (jij: {naming.titleInput || "leeg"})</dt>
+                <Mark right={naming.titleCorrect} />
+              </div>
+              {naming.guessedYear !== null ? (
+                <div>
+                  <dt>Jaar (jij: {naming.guessedYear})</dt>
+                  <dd className={naming.yearExact ? shared.good : shared.wrong}>
+                    {yearText(naming.guessedYear, reveal.cardYear)}
+                  </dd>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+          <div>
+            <dt>Tokens ({reveal.tokens} van {MAX_TOKENS})</dt>
+            <dd>{reveal.tokenChange === 0 ? "0" : signed(reveal.tokenChange)}</dd>
+          </div>
+        </dl>
 
         {reveal.outcome === "won" ? (
           <p className={styles.record}>
@@ -164,8 +247,39 @@ export function SoloTurn(props: Props) {
       </p>
       <RecordPlayer playback={playback} />
 
+      {started ? (
+        <div className={styles.naming}>
+          <div className={shared.field}>
+            <label htmlFor="artist">Artiest</label>
+            <input
+              id="artist"
+              value={artist}
+              onChange={(event) => setArtist(event.target.value)}
+              autoComplete="off"
+              autoCapitalize="words"
+              spellCheck={false}
+              maxLength={200}
+              placeholder={props.variant === "original" ? "Mag leeg, voor een token" : "Typfouten mogen"}
+            />
+          </div>
+          <div className={shared.field}>
+            <label htmlFor="title">Titel</label>
+            <input
+              id="title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={200}
+              placeholder={props.variant === "original" ? "Mag leeg, voor een token" : "Typfouten mogen"}
+            />
+          </div>
+          {expert ? <YearRuler value={year} onChange={setYear} /> : null}
+        </div>
+      ) : null}
+
       <section aria-label="Jouw tijdlijn">
-        <h2 className={shared.section}>Jouw tijdlijn</h2>
+        <Tokens count={tokens} />
         <TimelineLadder cards={toLadder(timeline)} selected={gap} onSelect={setGap} disabled={pending} />
       </section>
 
@@ -176,9 +290,29 @@ export function SoloTurn(props: Props) {
       ) : null}
 
       {started ? (
-        <button type="button" className={shared.cta} onClick={place} disabled={gap === null || pending}>
-          {gap === null ? "Tik op een plek" : "Plaatsen"}
-        </button>
+        <div className={shared.actions}>
+          <button type="button" className={shared.cta} onClick={place} disabled={gap === null || pending}>
+            {gap === null ? "Tik op een plek" : "Plaatsen"}
+          </button>
+          <div className={styles.spend}>
+            <button
+              type="button"
+              className={shared.secondary}
+              onClick={() => play(() => skipSoloSong(props.gameId, placed))}
+              disabled={tokens < SKIP_COST || pending}
+            >
+              Overslaan · {SKIP_COST}
+            </button>
+            <button
+              type="button"
+              className={shared.secondary}
+              onClick={() => play(() => buySoloCard(props.gameId, placed))}
+              disabled={tokens < BUY_COST || pending}
+            >
+              Kopen · {BUY_COST}
+            </button>
+          </div>
+        </div>
       ) : (
         <button
           type="button"
