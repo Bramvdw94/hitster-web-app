@@ -2,7 +2,11 @@
 // See docs/spec/data-model.md. Run by the "Import catalogue" GitHub Action, or locally:
 //
 //   SUPABASE_SECRET_KEY=… SPOTIFY_CLIENT_ID=… SPOTIFY_CLIENT_SECRET=… \
-//     npm run import:catalogue -- --editions aaaa0001,aaaa0006 [--dry-run] [--recheck-spotify]
+//     npm run import:catalogue -- --editions aaaa0001,aaaa0006 [--dry-run] [--recheck-spotify] [--max-lookups 250]
+//
+// Spotify also caps calls per day (a run of ~560 lookups on 2026-10-30 was locked out for 22 hours),
+// so --max-lookups stops looking up after that many tracks. What was looked up is saved, also when
+// Spotify locks the app out, and the next run carries on where this one stopped.
 //
 // Every edition with a year list is joined first, so a song printed in several editions gets the
 // best year of all of them, whichever editions this run imports. A song no list has a year for
@@ -16,16 +20,15 @@ import { applyPlan, loadExisting, loadStoredTracks } from "./catalogue/db";
 import { EDITIONS, JUMBO_FILE, selectEditions, SONGSEEKER_FILE, SONGSEEKER_SKU } from "./catalogue/editions";
 import { bestYears, joinEdition, type JoinResult, songseekerYearsByTrack, withBestYear } from "./catalogue/join";
 import { lookupArtistKind, lookupFirstReleaseYear } from "./catalogue/musicbrainz";
-import { artistsNeedingKind, type IncomingCard, planImport } from "./catalogue/plan";
+import { artistsNeedingKind, type IncomingCard, keepUnseenCards, planImport } from "./catalogue/plan";
 import { buildReport, formatReport } from "./catalogue/report";
 import { parseJumbo, parseYearCsv, type ArtistKind } from "./catalogue/sources";
-import { fetchTrack, getAppToken, type SpotifyTrack } from "./catalogue/spotify";
+import { fetchTrack, getAppToken, SpotifyRateLimitError, type SpotifyTrack } from "./catalogue/spotify";
 import { splitByFreshness } from "./catalogue/stored";
 
 const DEFAULT_SUPABASE_URL = "https://vijpefspdqpgpffwoxaj.supabase.co";
 // A development-mode app gets a small, unpublished rolling budget, and going over it locks the app
-// out for a day. Bram asked to go very slowly: one call every 10 seconds (6 a minute). One edition
-// of 300 new tracks then takes about 50 minutes, so import one or two editions per run.
+// out for a day. Bram asked to go very slowly: one call every 10 seconds (6 a minute).
 const SPOTIFY_DELAY_MS = 10_000;
 const MUSICBRAINZ_DELAY_MS = 1100;
 
@@ -46,6 +49,11 @@ async function main() {
   const editions = selectEditions(argument("editions") ?? "all");
   const dryRun = process.argv.includes("--dry-run");
   const recheck = process.argv.includes("--recheck-spotify");
+  const maxLookups = argument("max-lookups") ? Number.parseInt(argument("max-lookups")!, 10) : Infinity;
+  if (!(maxLookups > 0)) throw new Error("--max-lookups must be a positive number");
+  let lookupsLeft = maxLookups;
+  // Why the run stopped looking things up on Spotify, once it has.
+  let stopped: { reason: string; error?: unknown } | null = null;
   const [secretKey, clientId, clientSecret] = requireEnv(
     "SUPABASE_SECRET_KEY",
     "SPOTIFY_CLIENT_ID",
@@ -76,6 +84,7 @@ async function main() {
   const musicbrainzYears = new Map<string, number | null>();
 
   for (const config of editions) {
+    if (stopped) break;
     const join = joined.get(config.sku);
     if (!join) {
       const skipped = `## ${config.name} (${config.sku})\n\nSkipped: no year list at ${config.years.file}. Run the "Snapshot hitify" Action first.\n`;
@@ -86,18 +95,37 @@ async function main() {
     console.log(`\n${config.name} (${config.sku}): ${join.cards.length} cards joined`);
     const cards = join.cards.map((card) => withBestYear(card, best));
 
-    // Look everything up first, so a Spotify failure aborts before anything is written.
+    // Look up what this run's budget allows. A lock-out or failure stops the lookups, but what is
+    // known is still written, so the work is not lost.
     const stored = await loadStoredTracks(db, cards.map((c) => c.spotifyTrackId));
     const { reused, toLookUp } = splitByFreshness(cards, stored, { recheck });
     console.log(`Looking up ${toLookUp.length} tracks on Spotify (${reused.size} checked recently)`);
     const tracks = new Map<string, SpotifyTrack | null>(reused);
+    const lookedUp: string[] = [];
     for (const id of toLookUp) {
-      token ??= await getAppToken(clientId, clientSecret);
-      tracks.set(id, await fetchTrack(id, token));
-      if (tracks.size % 50 === 0) console.log(`  ${tracks.size - reused.size} of ${toLookUp.length}`);
+      if (lookupsLeft <= 0) {
+        stopped = { reason: `Stopped after ${maxLookups} Spotify lookups (--max-lookups); the next run carries on.` };
+        break;
+      }
+      try {
+        token ??= await getAppToken(clientId, clientSecret);
+        tracks.set(id, await fetchTrack(id, token));
+      } catch (error) {
+        stopped = { reason: error instanceof Error ? error.message : String(error), error };
+        break;
+      }
+      lookedUp.push(id);
+      lookupsLeft--;
+      if (lookedUp.length % 50 === 0) console.log(`  ${lookedUp.length} of ${toLookUp.length}`);
       await sleep(SPOTIFY_DELAY_MS);
     }
-    let incoming: IncomingCard[] = cards.map((card) => ({ ...card, track: tracks.get(card.spotifyTrackId)! }));
+    const known = cards.filter((card) => tracks.has(card.spotifyTrackId));
+    const waiting = cards.filter((card) => !tracks.has(card.spotifyTrackId)).map((card) => card.cardNumber);
+    if (known.length === 0) {
+      console.log(`\n${stopped?.reason ?? "No tracks known"}; nothing written for ${config.name}.`);
+      break;
+    }
+    let incoming: IncomingCard[] = known.map((card) => ({ ...card, track: tracks.get(card.spotifyTrackId)! }));
 
     const existing = await loadExisting(db, config.sku, incoming);
 
@@ -130,12 +158,21 @@ async function main() {
       await sleep(MUSICBRAINZ_DELAY_MS);
     }
 
-    const plan = planImport(config, existing, incoming, kinds);
-    if (!dryRun) await applyPlan(db, plan, toLookUp);
+    const full = planImport(config, existing, incoming, kinds);
+    const plan = waiting.length > 0 ? keepUnseenCards(full) : full;
+    if (!dryRun) await applyPlan(db, plan, lookedUp);
 
-    const report = formatReport(buildReport(config, incoming, join, plan.changes), { dryRun });
+    const report = formatReport(buildReport(config, incoming, join, plan.changes, waiting), { dryRun });
     console.log(`\n${report}`);
     if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${report}\n`);
+  }
+
+  if (stopped) {
+    console.log(`\n${stopped.reason}`);
+    if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `**${stopped.reason}**\n`);
+    // Reaching the budget is the plan; a lock-out or another failure still fails the run.
+    if (stopped.error && !(stopped.error instanceof SpotifyRateLimitError)) throw stopped.error;
+    if (stopped.error) process.exitCode = 1;
   }
 }
 
