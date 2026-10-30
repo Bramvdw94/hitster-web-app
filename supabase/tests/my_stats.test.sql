@@ -1,5 +1,5 @@
 -- get_my_stats() (#30): the streak across midnight Amsterdam time, the per-decade window of the
--- last 50 answers, and that another player's rows never show up.
+-- last 50 answers, solo records, and that another player's rows never show up.
 begin;
 
 insert into auth.users (id) values
@@ -59,6 +59,15 @@ insert into public.attempts (player_id, song_id, practice_session_id, dont_know,
 insert into public.attempts (player_id, song_id, practice_session_id, guessed_year, year_diff, points, artist_correct)
 select '00000000-0000-0000-0000-00000000000b', s, '30000000-0000-0000-0000-000000000004', 2000, 0, 7, true
 from unnest('{20000000-0000-0000-0000-000000000001,20000000-0000-0000-0000-000000000002,20000000-0000-0000-0000-000000000003}'::uuid[]) s;
+
+-- Solo records: A won Original in 17 and 23 songs and once ran out of deck; a pass-and-play game
+-- and B's Pro record don't count.
+insert into public.games (owner_id, mode, variant, status, state, songs_needed, finished_at) values
+  ('00000000-0000-0000-0000-00000000000a', 'solo', 'original', 'finished', '{}', 23, '2026-11-01 10:00Z'),
+  ('00000000-0000-0000-0000-00000000000a', 'solo', 'original', 'finished', '{}', 17, '2026-11-01 11:00Z'),
+  ('00000000-0000-0000-0000-00000000000a', 'solo', 'original', 'finished', '{}', null, '2026-11-01 12:00Z'),
+  ('00000000-0000-0000-0000-00000000000a', 'pass_and_play', 'pro', 'finished', '{}', null, '2026-11-01 13:00Z'),
+  ('00000000-0000-0000-0000-00000000000b', 'solo', 'pro', 'finished', '{}', 12, '2026-11-01 14:00Z');
 
 insert into public.song_progress (player_id, song_id, box, last_seen_session, due_at_session) values
   ('00000000-0000-0000-0000-00000000000a', '20000000-0000-0000-0000-000000000001', 5, 2, 18),
@@ -123,6 +132,9 @@ begin
   if jsonb_array_length(s->'hardest') <> 1
      or s->'hardest'->0->>'title' <> 'Seventies' or (s->'hardest'->0->>'wrong')::int <> 1 then
     raise exception 'hardest: got %', s->'hardest';
+  end if;
+  if s->'solo' <> '[{"variant": "original", "best": 17, "games": 3}]'::jsonb then
+    raise exception 'solo records: got %', s->'solo';
   end if;
 end $$;
 

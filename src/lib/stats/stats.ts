@@ -14,6 +14,8 @@ export type MyStats = {
   // At most 1 year off, over the last 50 answers per decade.
   decades: { decade: number; answered: number; close: number }[];
   editions: { name: string; known: number; total: number }[];
+  // Finished solo games per variant; best is the fewest songs needed, null when none was won.
+  solo: { variant: "original" | "pro" | "expert"; best: number | null; games: number }[];
   hardest: {
     id: string;
     title: string;
