@@ -9,7 +9,8 @@ export type AttemptInput = {
   // Exactly one of the two: a practice answer or a solo game placement.
   practiceSessionId: string | null;
   gameId?: string | null;
-  // Set for a game placement, which moves the box by the placement instead of the year.
+  // Set for a game placement, which moves the box by the placement unless a year was typed
+  // (Expert), which moves it by the year as in practice.
   placedCorrectly?: boolean;
   guessedYear: number | null;
   yearDiff: number | null;
@@ -35,7 +36,7 @@ export async function recordAttempt(admin: SupabaseClient, input: AttemptInput):
 
   const before = boxBefore(progress?.box);
   const after =
-    input.placedCorrectly === undefined
+    input.placedCorrectly === undefined || input.guessedYear !== null
       ? nextBox(before, input.yearDiff)
       : nextBoxAfterPlacement(before, input.placedCorrectly);
   const { error } = await admin.rpc("record_attempt", {

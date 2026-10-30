@@ -1,10 +1,10 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RevealedSong } from "@/lib/practice/session";
-import type { SoloState, TimelineCard } from "./state";
+import type { SoloState, TimelineCard, Variant } from "./state";
 import type { TogetherState } from "./together";
 
-export type GameVariant = "original" | "pro" | "expert";
+export type GameVariant = Variant;
 
 // `state` is a SoloState in solo and a TogetherState in pass-and-play.
 export type Game<S = SoloState> = {

@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { TimelineLadder } from "@/components/timeline-ladder/timeline-ladder";
 import { loadGame, type Game } from "@/lib/game/games";
-import { WINNING_CARDS } from "@/lib/game/state";
+import { VARIANT_NAMES, WINNING_CARDS } from "@/lib/game/state";
 import type { TogetherState } from "@/lib/game/together";
 import { viewOf } from "@/lib/game/together-view";
 import { createClient } from "@/lib/supabase/server";
@@ -17,8 +17,6 @@ export const metadata = { title: "Samen · Jaartal" };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const variantName = { original: "Original", pro: "Pro", expert: "Expert" } as const;
-
 // The winner screen: everyone's card counts, most first, and the winner's timeline.
 function Result({ game }: { game: Game<TogetherState> }) {
   const { seats, winner } = game.state;
@@ -30,7 +28,7 @@ function Result({ game }: { game: Game<TogetherState> }) {
   return (
     <>
       <section className={shared.total} aria-label="Uitslag">
-        <p className={shared.section}>Samen · {variantName[game.variant]}</p>
+        <p className={shared.section}>Samen · {VARIANT_NAMES[game.variant]}</p>
         {champion ? (
           <>
             <p className={spel.verdict}>{champion.name} wint!</p>

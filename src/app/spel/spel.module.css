@@ -77,6 +77,47 @@ input:checked + .radio::after {
   text-align: center;
 }
 
+.naming {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Tokens: small coins above the timeline, filled for each one held. */
+
+.tokens {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.tokensLabel {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.token {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+}
+
+.tokenOn {
+  border-color: var(--close);
+  background: radial-gradient(circle at 35% 35%, #fff1c2 0%, var(--close) 60%);
+}
+
+.spend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .link {
   color: inherit;
   text-decoration: none;

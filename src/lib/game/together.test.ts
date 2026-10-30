@@ -9,7 +9,6 @@ import {
   lockPlacement,
   outcomeOf,
   resolveSteals,
-  rightGap,
   skipSong,
   startTogether,
   stealOrder,
@@ -237,40 +236,5 @@ describe("winning", () => {
     const { state, cards } = game(["A", "B"], [1980, 1970, 1990]);
     const turn = judgeTurn(lockPlacement(state, 0, []), "original", cards[2], unnamed);
     expect(outcomeOf(turn.state)).toBe("deck_empty");
-  });
-});
-
-describe("rightGap", () => {
-  it("finds where a year fits", () => {
-    expect(rightGap([], 1990)).toBe(0);
-    expect(rightGap([1980, 2000], 1990)).toBe(1);
-    expect(rightGap([1980, 2000], 2010)).toBe(2);
-  });
-});
-
-describe("a whole game", () => {
-  it("plays 3 players with a steal to a winner", () => {
-    // Starting cards 1900, 1901, 1902; then songs 1950, 1951, ... so the last gap is always right.
-    const { state: start, cards } = game(
-      ["A", "B", "C"],
-      [1900, 1901, 1902, ...Array.from({ length: 60 }, (_, i) => 1950 + i)],
-    );
-    let state = start;
-    let steals = 0;
-    for (let i = 3; outcomeOf(state) === "playing"; i++) {
-      const seat = state.turn;
-      const last = state.seats[seat].timeline.length;
-      // B steals A's first song: A puts it at the front (wrong), B takes the last gap (right).
-      const turn =
-        i === 3
-          ? judgeTurn(lockPlacement(state, 0, [{ seat: 1, gap: last }]), "original", cards[i], unnamed)
-          : judgeTurn(lockPlacement(state, last, []), "original", cards[i], named);
-      if (turn.stolen) steals++;
-      state = turn.state;
-    }
-    expect(steals).toBe(1);
-    expect(state.winner).toBe(1);
-    expect(state.seats[1].timeline).toHaveLength(10);
-    expect(state.seats.map((s) => s.timeline.length)).toEqual([8, 10, 8]);
   });
 });

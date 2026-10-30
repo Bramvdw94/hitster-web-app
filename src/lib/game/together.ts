@@ -3,18 +3,25 @@
 // the active player named the song, and these rules only take those taps.
 
 import { fitsGap } from "./placement";
-import { WINNING_CARDS, type TimelineCard } from "./state";
+import {
+  BUY_COST,
+  MAX_TOKENS,
+  rightGap,
+  SKIP_COST,
+  START_TOKENS,
+  winsCard,
+  WINNING_CARDS,
+  type TimelineCard,
+  type Variant,
+} from "./state";
+
+// The token rules are the solo ones from #28; stealing is the one move solo doesn't have.
+export { BUY_COST, MAX_TOKENS, SKIP_COST, START_TOKENS, type Variant };
 
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 8;
 export const MAX_NAME_LENGTH = 20;
-export const START_TOKENS = 2;
-export const MAX_TOKENS = 5;
-export const SKIP_COST = 1;
 export const STEAL_COST = 1;
-export const BUY_COST = 3;
-
-export type Variant = "original" | "pro" | "expert";
 
 // A name in this game only, never an account (#16).
 export type Seat = {
@@ -88,12 +95,6 @@ export function outcomeOf(state: TogetherState): Outcome {
   return "playing";
 }
 
-// The first gap where a card of `year` fits; where a bought card goes.
-export function rightGap(years: number[], year: number): number {
-  const i = years.findIndex((y) => y > year);
-  return i === -1 ? years.length : i;
-}
-
 function insertAt(timeline: TimelineCard[], gap: number, card: TimelineCard): TimelineCard[] {
   return [...timeline.slice(0, gap), card, ...timeline.slice(gap)];
 }
@@ -140,10 +141,7 @@ export function buyCard(state: TogetherState, card: TimelineCard): TogetherState
   if (card.songId !== currentSong(state)) throw new Error("That song is not the one playing");
   const seat = state.seats[state.turn];
   if (seat.tokens < BUY_COST) throw new Error("Not enough tokens to buy");
-  const gap = rightGap(
-    seat.timeline.map((c) => c.year),
-    card.year,
-  );
+  const gap = rightGap(seat.timeline, card.year);
   const seats = withSeat(state.seats, state.turn, (s) => ({
     ...s,
     tokens: s.tokens - BUY_COST,
@@ -181,10 +179,11 @@ export function lockPlacement(state: TogetherState, gap: number, steals: Steal[]
 // Whether the active player wins the card: the placement fits, plus the group's taps in Pro and
 // Expert. Original only looks at the placement.
 export function activeWins(variant: Variant, placedRight: boolean, judgement: Judgement): boolean {
-  if (!placedRight) return false;
-  if (variant === "original") return true;
-  if (!judgement.named) return false;
-  return variant === "pro" || judgement.exactYear;
+  return winsCard(variant, placedRight, {
+    artistCorrect: judgement.named,
+    titleCorrect: judgement.named,
+    yearExact: judgement.exactYear,
+  });
 }
 
 export type StealResult = {
@@ -239,14 +238,7 @@ export function judgeTurn(state: TogetherState, variant: Variant, card: Timeline
   if (winner !== null) {
     seats = withSeat(seats, winner, (s) => ({
       ...s,
-      timeline: insertAt(
-        s.timeline,
-        rightGap(
-          s.timeline.map((c) => c.year),
-          card.year,
-        ),
-        card,
-      ),
+      timeline: insertAt(s.timeline, rightGap(s.timeline, card.year), card),
     }));
   }
   const won = winner !== null && seats[winner].timeline.length >= WINNING_CARDS;
