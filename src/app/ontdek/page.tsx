@@ -19,6 +19,7 @@ import {
   type PracticeFilter,
 } from "@/lib/practice/filter";
 import { KNOWN_BOX } from "@/lib/practice/leitner";
+import { loadSession, findActiveSessionId } from "@/lib/practice/session";
 import { yearsOffText } from "@/lib/stats/stats";
 import { createClient } from "@/lib/supabase/server";
 import { startPractice } from "../oefenen/actions";
@@ -53,7 +54,7 @@ function Song({ song }: { song: ExploreSong }) {
         <span className={styles.cover} aria-hidden="true" />
       )}
       <span className={styles.songText}>
-        <span className={styles.title}>{song.title}</span>
+        <span className={styles.songTitle}>{song.title}</span>
         <span className={styles.artist}>{song.artists ?? "Onbekende artiest"}</span>
         <span className={styles.meta}>
           <span className={song.box === KNOWN_BOX ? styles.known : undefined}>{boxText(song.box)}</span>
@@ -138,13 +139,15 @@ function Search({ filter, artist, decades }: { filter: PracticeFilter; artist: s
 async function Results({ searchParams }: { searchParams: PageProps<"/ontdek">["searchParams"] }) {
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
-  if (!claims?.claims.sub) redirect("/login");
+  const playerId = claims?.claims.sub;
+  if (!playerId) redirect("/login");
 
   const filter = fromSearchParams(await searchParams);
-  const [artist, years, result] = await Promise.all([
+  const [artist, years, result, running] = await Promise.all([
     artistName(supabase, filter.artistId),
     catalogueYears(supabase),
     isFiltered(filter) ? exploreSongs(supabase, filter) : Promise.resolve(null),
+    findActiveSessionId(supabase, playerId).then((id) => (id ? loadSession(supabase, id) : null)),
   ]);
   const heading = [artist, rangeLabel(filter)].filter(Boolean).join(" · ");
 
@@ -166,12 +169,19 @@ async function Results({ searchParams }: { searchParams: PageProps<"/ontdek">["s
                 : ", van oud naar nieuw."}
             </p>
             <form action={startPractice}>
+              <input type="hidden" name="vervang" value="1" />
               {filter.artistId ? <input type="hidden" name="artiest" value={filter.artistId} /> : null}
               {filter.yearFrom !== null ? <input type="hidden" name="van" value={filter.yearFrom} /> : null}
               {filter.yearTo !== null ? <input type="hidden" name="tot" value={filter.yearTo} /> : null}
               <button type="submit" className={styles.cta}>
                 Oefen deze nummers
               </button>
+              {running ? (
+                <p className={styles.note}>
+                  Je lopende oefenronde ({running.current} van {running.session.song_ids.length} gespeeld) stopt dan.
+                  Wat je al geantwoord hebt, telt gewoon mee.
+                </p>
+              ) : null}
             </form>
           </div>
           <ol className={styles.timeline}>

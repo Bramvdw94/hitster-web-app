@@ -19,6 +19,8 @@ const MAX_ARTIST_LENGTH = 200;
 export async function startPractice(formData: FormData) {
   const weakOnly = formData.get("zwak") === "1";
   const filter = parseFilter((name) => formData.get(name));
+  // Ontdek's "Oefen deze nummers": stop a running session instead of returning to it.
+  const replace = formData.get("vervang") === "1";
   const editionIds = weakOnly
     ? []
     : formData.getAll("edition").filter((v): v is string => typeof v === "string" && v !== "");
@@ -56,6 +58,7 @@ export async function startPractice(formData: FormData) {
     p_artist_id: filter.artistId,
     p_year_from: filter.yearFrom,
     p_year_to: filter.yearTo,
+    p_replace: replace,
   });
   if (error) {
     const problem = error.code !== "P0002" ? "starten" : weakOnly ? "geen_zwakke" : "geen_nummers";

@@ -9,7 +9,8 @@ export type PracticeSession = {
   edition_ids: string[];
   weak_only: boolean;
   song_ids: string[];
-  status: "active" | "finished";
+  // Abandoned: replaced by a new session from Ontdek before it was done.
+  status: "active" | "finished" | "abandoned";
   // The filter it was dealt with (src/lib/practice/filter.ts); null means none.
   artist_id: string | null;
   year_from: number | null;

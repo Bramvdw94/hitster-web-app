@@ -156,7 +156,7 @@ async function Session({ params }: { params: PageProps<"/oefenen/[id]">["params"
     state = { ...state, session: { ...state.session, status: "finished" } };
   }
 
-  if (state.session.status === "finished") return <Summary state={state} />;
+  if (state.session.status !== "active") return <Summary state={state} />;
 
   return (
     <PracticeTurn
