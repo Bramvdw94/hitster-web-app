@@ -190,3 +190,12 @@ export function planImport(
 
   return { editionId, edition, artists, songs, replaceArtistsOf, songArtists, cards, removedCards, changes };
 }
+
+// A run that stopped before every card's track was known only adds cards; it never removes the rest.
+export function keepUnseenCards(plan: Plan): Plan {
+  return {
+    ...plan,
+    removedCards: [],
+    changes: { ...plan.changes, cards: plan.changes.cards - plan.removedCards.length },
+  };
+}

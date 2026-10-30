@@ -30,6 +30,9 @@ type TrackResponse = {
   artists?: { id: string | null; name: string }[];
 };
 
+// Spotify locked the app out; the message says for how long.
+export class SpotifyRateLimitError extends Error {}
+
 // A rate limit longer than this aborts the run instead of sleeping through it.
 export const MAX_RETRY_AFTER_SECONDS = 120;
 const REQUEST_TIMEOUT_MS = 15_000;
@@ -72,9 +75,7 @@ export async function fetchTrack(
     }
     const retryAfter = Number(response.headers.get("retry-after"));
     if (retryAfter > MAX_RETRY_AFTER_SECONDS) {
-      throw new Error(
-        `Spotify rate limit: retry after ${Math.ceil(retryAfter / 60)} minutes. Nothing was written; run the import again later.`,
-      );
+      throw new SpotifyRateLimitError(`Spotify rate limit: retry after ${Math.ceil(retryAfter / 60)} minutes.`);
     }
     const waitMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** attempt;
     console.log(`Spotify answered ${response.status} for ${trackId}, waiting ${Math.round(waitMs / 1000)}s`);

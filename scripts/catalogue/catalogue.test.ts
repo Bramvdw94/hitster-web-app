@@ -4,7 +4,7 @@ import type { EditionConfig } from "./editions";
 import { selectEditions } from "./editions";
 import { formatYearCsv, parseHitifyHtml } from "./hitify";
 import { bestYears, joinEdition, songseekerYearsByTrack, withBestYear } from "./join";
-import { artistsNeedingKind, type Existing, type IncomingCard, type Plan, planImport } from "./plan";
+import { artistsNeedingKind, type Existing, type IncomingCard, keepUnseenCards, type Plan, planImport } from "./plan";
 import { buildReport, formatReport, totalChanges } from "./report";
 import { parseCsv, parseJumbo, parseYearCsv, spotifyTrackId } from "./sources";
 import { splitByFreshness } from "./stored";
@@ -262,6 +262,19 @@ describe("several editions", () => {
   });
 });
 
+describe("a run that stops early", () => {
+  it("adds the cards it knows and keeps the rest", () => {
+    const { incoming } = incomingCards();
+    const before = apply(empty, planImport(config, empty, incoming, new Map(), newId));
+    const partial = planImport(config, before, incoming.slice(0, 2), new Map(), newId);
+    expect(partial.removedCards).toEqual([3, 5]);
+
+    const kept = keepUnseenCards(partial);
+    expect(kept.removedCards).toEqual([]);
+    expect(kept.changes.cards).toBe(0);
+  });
+});
+
 describe("report", () => {
   it("counts cards, missing years and unplayable songs", () => {
     const { incoming, withoutTrack, withoutYearRow } = incomingCards();
@@ -275,6 +288,7 @@ describe("report", () => {
       withoutYearRow: [],
       withoutYear: [5],
       musicbrainzYears: [],
+      waitingForSpotify: [],
       uncertainYears: [],
       notOnSpotify: [5],
       notPlayableNl: [3, 5],
@@ -284,6 +298,9 @@ describe("report", () => {
     expect(text).toContain("| Not playable in NL | 2 (cards 3, 5) |");
     expect(text).toContain("| Changed | no changes |");
 
+    expect(formatReport(buildReport(config, incoming, { withoutTrack, withoutYearRow }, changes, [7, 8]))).toContain(
+      "| Waiting for a later run (Spotify budget) | 2 (cards 7, 8) |",
+    );
     const many = formatReport({ ...report, uncertainYears: Array.from({ length: 21 }, (_, i) => i + 1) });
     expect(many).toContain("| Uncertain years | 21 |");
   });

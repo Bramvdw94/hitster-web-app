@@ -10,6 +10,7 @@ export type EditionReport = {
   withoutYearRow: number[];
   withoutYear: number[];
   musicbrainzYears: number[];
+  waitingForSpotify: number[];
   uncertainYears: number[];
   notOnSpotify: number[];
   notPlayableNl: number[];
@@ -21,6 +22,8 @@ export function buildReport(
   incoming: IncomingCard[],
   join: { withoutTrack: number[]; withoutYearRow: number[] },
   changes: Changes,
+  // Cards left for a later run because the Spotify budget ran out.
+  waitingForSpotify: number[] = [],
 ): EditionReport {
   const numbers = (keep: (card: IncomingCard) => boolean) => incoming.filter(keep).map((c) => c.cardNumber);
   return {
@@ -32,6 +35,7 @@ export function buildReport(
     withoutYearRow: join.withoutYearRow,
     withoutYear: numbers((c) => c.cardYear === null),
     musicbrainzYears: numbers((c) => c.yearSource === "musicbrainz"),
+    waitingForSpotify,
     uncertainYears: numbers((c) => c.yearStatus === "uncertain"),
     notOnSpotify: numbers((c) => c.track === null),
     notPlayableNl: numbers((c) => !c.track?.playableNl),
@@ -65,6 +69,7 @@ export function formatReport(report: EditionReport, { dryRun = false } = {}): st
     `| Years from MusicBrainz | ${list(report.musicbrainzYears)} |`,
     `| Not found on Spotify | ${list(report.notOnSpotify)} |`,
     `| Not playable in NL | ${list(report.notPlayableNl)} |`,
+    `| Waiting for a later run (Spotify budget) | ${list(report.waitingForSpotify)} |`,
     `| ${dryRun ? "Would change" : "Changed"} | ${changed} |`,
     "",
   ].join("\n");
