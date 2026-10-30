@@ -111,6 +111,79 @@ function hideNowPlaying() {
   navigator.mediaSession.metadata = new MediaMetadata({ title: DEVICE_NAME, artist: "?" });
 }
 
+type PlayerEvent =
+  | { type: "klaar" }
+  | { type: "fout"; problem: PlaybackProblem }
+  | { type: "stand"; sdkState: Spotify.WebPlaybackState };
+
+// One player for the whole page visit. A new player per turn piled up devices at Spotify,
+// and after a full game a fresh one sometimes never got ready until a reload.
+type SharedPlayer = {
+  player: Spotify.Player;
+  device: Promise<string>;
+  ready: boolean;
+  // After an error or a dropped connection the next turn starts with a new player.
+  broken: boolean;
+};
+
+let shared: SharedPlayer | null = null;
+const subscribers = new Set<(event: PlayerEvent) => void>();
+
+function emit(player: Spotify.Player, event: PlayerEvent) {
+  if (shared?.player !== player) return;
+  if (event.type === "fout") shared.broken = true;
+  for (const subscriber of subscribers) subscriber(event);
+}
+
+// Creates a player for the loaded SDK. Synchronous, so a tap can activate it right away.
+function createSharedPlayer(): SharedPlayer {
+  shared?.player.disconnect();
+  const SpotifySdk = window.Spotify!;
+  const player = new SpotifySdk.Player({
+    name: DEVICE_NAME,
+    volume: 0.8,
+    getOAuthToken: (callback) => {
+      getAccessToken()
+        .then(callback)
+        .catch((error) => emit(player, { type: "fout", problem: problemOf(error) }));
+    },
+  });
+  const device = new Promise<string>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new PlaybackProblemError("verbinding")), READY_TIMEOUT_MS);
+    player.addListener("ready", ({ device_id }) => {
+      clearTimeout(timer);
+      resolve(device_id);
+      if (shared?.player === player) shared.ready = true;
+      emit(player, { type: "klaar" });
+    });
+  });
+  const created: SharedPlayer = { player, device, ready: false, broken: false };
+  shared = created;
+
+  // Nobody may be waiting yet; the failure still shows through the subscribers.
+  device.catch((error) => emit(player, { type: "fout", problem: problemOf(error) }));
+  player.addListener("not_ready", () => emit(player, { type: "fout", problem: "verbinding" }));
+  for (const event of ["initialization_error", "authentication_error", "account_error", "playback_error"] as const) {
+    player.addListener(event, () => {
+      if (event === "authentication_error") cachedToken = null;
+      emit(player, { type: "fout", problem: problemFromSdkError(event) });
+    });
+  }
+  player.addListener("player_state_changed", (sdkState) => {
+    if (!sdkState) return;
+    hideNowPlaying();
+    emit(player, { type: "stand", sdkState });
+  });
+  player.connect().then((connected) => {
+    if (!connected) emit(player, { type: "fout", problem: "verbinding" });
+  });
+  return created;
+}
+
+function sharedPlayer(): SharedPlayer {
+  return shared && !shared.broken ? shared : createSharedPlayer();
+}
+
 // The record player's connection to Spotify. Modes use this and never touch the SDK.
 export function usePlayback(): Playback {
   const [state, dispatch] = useReducer(playbackReducer, initialPlaybackState);
@@ -127,89 +200,61 @@ export function usePlayback(): Playback {
 
   const fail = useCallback((problem: PlaybackProblem) => {
     if (startTimerRef.current) clearTimeout(startTimerRef.current);
+    // Whatever went wrong, the next turn gets a fresh player, as before the player was shared.
+    if (shared && shared.player === playerRef.current) shared.broken = true;
     dispatch({ type: "fout", problem });
   }, []);
 
-  // Creates a player for the loaded SDK. Synchronous, so a tap can activate it right away.
-  const createPlayer = useCallback((): Spotify.Player => {
-    const SpotifySdk = window.Spotify!;
-    const player = new SpotifySdk.Player({
-      name: DEVICE_NAME,
-      volume: 0.8,
-      getOAuthToken: (callback) => {
-        getAccessToken()
-          .then(callback)
-          .catch((error) => fail(problemOf(error)));
-      },
-    });
-    playerRef.current = player;
-
-    deviceRef.current = new Promise<string>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new PlaybackProblemError("verbinding")), READY_TIMEOUT_MS);
-      player.addListener("ready", ({ device_id }) => {
-        clearTimeout(timer);
-        resolve(device_id);
-        if (playerRef.current === player) dispatch({ type: "klaar" });
-      });
-    });
-    // Nobody may be waiting yet; the failure still shows through the catch below.
-    deviceRef.current.catch((error) => {
-      if (playerRef.current === player) fail(problemOf(error));
-    });
-
-    player.addListener("not_ready", () => {
-      if (playerRef.current === player) fail("verbinding");
-    });
-    for (const event of ["initialization_error", "authentication_error", "account_error", "playback_error"] as const) {
-      player.addListener(event, () => {
-        if (playerRef.current !== player) return;
-        if (event === "authentication_error") cachedToken = null;
-        fail(problemFromSdkError(event));
-      });
-    }
-    player.addListener("player_state_changed", (sdkState) => {
-      if (playerRef.current !== player || !sdkState) return;
-      hideNowPlaying();
-      if (!sdkState.paused && startTimerRef.current) {
-        clearTimeout(startTimerRef.current);
-        startTimerRef.current = null;
-      }
-      dispatch({
-        type: "stand",
-        paused: sdkState.paused,
-        positionMs: sdkState.position,
-        durationMs: sdkState.duration,
-        at: Date.now(),
-      });
-    });
-
-    player.connect().then((connected) => {
-      if (!connected && playerRef.current === player) fail("verbinding");
-    });
-    return player;
-  }, [fail]);
+  // Points this hook at the shared player, which may already be ready from an earlier turn.
+  const attachPlayer = useCallback((current: SharedPlayer): Spotify.Player => {
+    playerRef.current = current.player;
+    deviceRef.current = current.device;
+    if (current.ready) dispatch({ type: "klaar" });
+    return current.player;
+  }, []);
 
   const dropPlayer = useCallback(() => {
     if (startTimerRef.current) clearTimeout(startTimerRef.current);
-    playerRef.current?.disconnect();
     playerRef.current = null;
     deviceRef.current = null;
   }, []);
 
   useEffect(() => {
     let cancelled = false;
+    const onEvent = (event: PlayerEvent) => {
+      if (event.type === "klaar") dispatch({ type: "klaar" });
+      else if (event.type === "fout") fail(event.problem);
+      else {
+        const { sdkState } = event;
+        if (!sdkState.paused && startTimerRef.current) {
+          clearTimeout(startTimerRef.current);
+          startTimerRef.current = null;
+        }
+        dispatch({
+          type: "stand",
+          paused: sdkState.paused,
+          positionMs: sdkState.position,
+          durationMs: sdkState.duration,
+          at: Date.now(),
+        });
+      }
+    };
+    subscribers.add(onEvent);
     loadSdk()
       .then(() => {
-        if (!cancelled) createPlayer();
+        if (!cancelled) attachPlayer(sharedPlayer());
       })
       .catch((error) => {
         if (!cancelled) fail(problemOf(error));
       });
     return () => {
       cancelled = true;
+      subscribers.delete(onEvent);
+      // Leaving the turn stops the song; the player itself stays for the next turn.
+      playerRef.current?.pause().catch(() => {});
       dropPlayer();
     };
-  }, [createPlayer, dropPlayer, fail]);
+  }, [attachPlayer, dropPlayer, fail]);
 
   // Must be called inside the tap: mobile browsers only allow sound that a tap started.
   const startTrack = useCallback(
@@ -251,11 +296,11 @@ export function usePlayback(): Playback {
     dispatch({ type: "verbinden" });
     if (!window.Spotify) {
       loadSdk()
-        .then(() => createPlayer())
+        .then(() => attachPlayer(createSharedPlayer()))
         .catch((error) => fail(problemOf(error)));
       return;
     }
-    const player = createPlayer();
+    const player = attachPlayer(createSharedPlayer());
     const trackId = trackIdRef.current;
     if (!trackId) return;
     // Activate inside this tap; the play request waits for the new device itself.
@@ -266,7 +311,7 @@ export function usePlayback(): Playback {
         if (playerRef.current === player) startTrack(player, trackId);
       })
       .catch(() => {});
-  }, [createPlayer, dropPlayer, fail, startTrack]);
+  }, [attachPlayer, dropPlayer, fail, startTrack]);
 
   const pause = useCallback(() => {
     playerRef.current?.pause().catch(() => fail("afspelen"));
