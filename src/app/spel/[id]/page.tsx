@@ -7,6 +7,7 @@ import { currentSong, isNewRecord, tokensOf, VARIANT_NAMES, WINNING_CARDS } from
 import { trackIdOf } from "@/lib/practice/session";
 import { createClient } from "@/lib/supabase/server";
 import { canCorrectYears } from "@/lib/year-correction/actions";
+import { zoekhulpOn } from "@/lib/zoekhulp/server";
 import { startSoloGame } from "../actions";
 import { SoloTurn } from "./solo-turn";
 import shared from "../../oefenen/oefenen.module.css";
@@ -113,6 +114,7 @@ async function GameView({ params }: { params: PageProps<"/spel/[id]">["params"] 
       timeline={game.state.timeline}
       trackId={await trackIdOf(supabase, songId)}
       canCorrectYears={await canCorrectYears()}
+      hints={await zoekhulpOn()}
     />
   );
 }

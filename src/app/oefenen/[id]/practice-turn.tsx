@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RecordPlayer } from "@/components/record-player/record-player";
+import { SuggestInput } from "@/components/suggest-input/suggest-input";
 import { DEFAULT_YEAR } from "@/components/year-ruler/ruler";
 import { YearRuler } from "@/components/year-ruler/year-ruler";
 import { YearCorrection } from "@/components/year-correction/year-correction";
@@ -18,6 +19,8 @@ type Props = {
   trackId: string;
   // Bram sees "Jaar klopt niet" on the answer screen.
   canCorrectYears: boolean;
+  // Zoekhulp, chosen on the start screen.
+  hints: boolean;
 };
 
 const problemText = {
@@ -171,10 +174,12 @@ export function PracticeTurn(props: Props) {
           <YearRuler value={year} onChange={setYear} />
           <div className={styles.field}>
             <label htmlFor="artist">Artiest</label>
-            <input
+            <SuggestInput
+              kind="artist"
+              enabled={props.hints}
               id="artist"
               value={artist}
-              onChange={(event) => setArtist(event.target.value)}
+              onValue={setArtist}
               autoComplete="off"
               autoCapitalize="words"
               spellCheck={false}

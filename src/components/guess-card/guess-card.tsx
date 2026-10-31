@@ -1,6 +1,7 @@
 "use client";
 
 import type { KeyboardEvent } from "react";
+import { SuggestInput } from "@/components/suggest-input/suggest-input";
 import { YearRuler } from "@/components/year-ruler/year-ruler";
 import type { Variant } from "@/lib/game/state";
 import styles from "./guess-card.module.css";
@@ -23,6 +24,8 @@ type Props = {
   pending: boolean;
   onPlace: () => void;
   onClear: () => void;
+  // Zoekhulp: suggestions from the catalogue while typing.
+  hints: boolean;
 };
 
 const notes = {
@@ -57,13 +60,22 @@ export function GuessCard(props: Props) {
       <span>{props.where}</span>
     </span>
   );
+  // Portrait: the list spans both fields, below them. Landscape: it opens upward, so the
+  // keyboard does not cover it.
+  const suggestPlace =
+    layout === "bar"
+      ? ({ placement: "above", anchor: "self", wrapClassName: styles.barField } as const)
+      : ({ placement: "below", anchor: "parent" } as const);
   const fields = (
     <>
-      <input
+      <SuggestInput
+        kind="artist"
+        enabled={props.hints}
+        {...suggestPlace}
         name="artist"
         className={styles.input}
         value={props.artist}
-        onChange={(event) => props.onArtist(event.target.value)}
+        onValue={props.onArtist}
         onKeyDown={onArtistKey}
         aria-label="Artiest"
         placeholder={`Artiest (${placeholder})`}
@@ -73,11 +85,14 @@ export function GuessCard(props: Props) {
         maxLength={200}
         enterKeyHint="next"
       />
-      <input
+      <SuggestInput
+        kind="title"
+        enabled={props.hints}
+        {...suggestPlace}
         name="title"
         className={styles.input}
         value={props.title}
-        onChange={(event) => props.onTitle(event.target.value)}
+        onValue={props.onTitle}
         onKeyDown={onTitleKey}
         aria-label="Titel"
         placeholder={`Titel (${placeholder})`}

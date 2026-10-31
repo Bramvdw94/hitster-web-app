@@ -17,6 +17,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { canCorrectYears } from "@/lib/year-correction/actions";
+import { zoekhulpOn } from "@/lib/zoekhulp/server";
 import { startPractice } from "../actions";
 import { PracticeTurn } from "./practice-turn";
 import styles from "../oefenen.module.css";
@@ -167,6 +168,7 @@ async function Session({ params }: { params: PageProps<"/oefenen/[id]">["params"
       points={state.points}
       trackId={await trackIdOf(supabase, state.session.song_ids[state.current])}
       canCorrectYears={await canCorrectYears()}
+      hints={await zoekhulpOn()}
     />
   );
 }

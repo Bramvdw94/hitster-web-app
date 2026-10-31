@@ -1,3 +1,5 @@
+import { ZoekhulpToggle } from "@/components/zoekhulp-toggle/zoekhulp-toggle";
+import { zoekhulpOn } from "@/lib/zoekhulp/server";
 import Link from "next/link";
 import { Suspense } from "react";
 import { PlaybackSuggestion } from "@/components/device-picker/playback-suggestion";
@@ -128,6 +130,7 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/spel">["searc
       </fieldset>
 
       <EditionPicker editions={editions} allCount={allCount ?? 0} />
+      <ZoekhulpToggle initial={await zoekhulpOn()} />
       <PlaybackSuggestion />
       <StartButton replaces={running !== null} disabled={!allCount} />
     </form>

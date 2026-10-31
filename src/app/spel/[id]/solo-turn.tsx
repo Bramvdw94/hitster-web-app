@@ -34,6 +34,8 @@ type Props = {
   trackId: string;
   // Bram sees "Jaar klopt niet" on the reveal.
   canCorrectYears: boolean;
+  // Zoekhulp, chosen on the start screen.
+  hints: boolean;
 };
 
 const problemText = {
@@ -304,6 +306,7 @@ export function SoloTurn(props: Props) {
         pending={pending}
         onPlace={place}
         onClear={() => setGap(null)}
+        hints={props.hints}
       />
     );
   }

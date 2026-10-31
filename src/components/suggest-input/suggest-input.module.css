@@ -1,0 +1,53 @@
+.wrap {
+  position: relative;
+  min-width: 0;
+}
+
+/* The list anchors to the nearest positioned parent (the two fields of the portrait card). */
+.contents {
+  display: contents;
+}
+
+/* Cream on dark ink, like a record sleeve: readable on the orange card and on the dark page. */
+.list {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid rgba(42, 13, 0, 0.25);
+  border-radius: 10px;
+  background: #fff4ea;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  min-width: 200px;
+  list-style: none;
+  text-align: left;
+}
+
+.below {
+  top: calc(100% + 4px);
+}
+
+.above {
+  bottom: calc(100% + 4px);
+}
+
+.list li {
+  padding: 10px;
+  border-radius: 7px;
+  color: #2a0d00;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.list li + li {
+  border-top: 1px solid rgba(42, 13, 0, 0.08);
+}
+
+.list li:hover,
+.list .active {
+  background: rgba(255, 122, 61, 0.25);
+}

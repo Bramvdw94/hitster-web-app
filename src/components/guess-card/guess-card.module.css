@@ -78,6 +78,7 @@
 }
 
 .fields {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
@@ -180,6 +181,13 @@
 .bar .input {
   flex: 1;
   height: 40px;
+}
+
+/* With Zoekhulp each landscape field sits in a wrapper that takes the input's share. */
+.barField {
+  display: flex;
+  flex: 1;
+  min-width: 0;
 }
 
 .bar .yearInput {
