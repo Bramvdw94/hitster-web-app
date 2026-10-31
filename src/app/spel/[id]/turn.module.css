@@ -21,9 +21,9 @@
   --t: 0;
   --bar: 72;
   position: sticky;
-  top: -300px;
+  top: -322px;
   z-index: 5;
-  height: 372px;
+  height: 394px;
   margin: 0 -16px;
 }
 
@@ -69,7 +69,7 @@
 
 .heroRecord {
   position: absolute;
-  top: calc(66px + 248px * var(--t));
+  top: calc(66px + 270px * var(--t));
   left: calc((100% - 206px) / 2 * (1 - var(--t)) + 16px * var(--t));
   width: calc(206px - 162px * var(--t));
 }
@@ -101,7 +101,7 @@
 
 .heroControls {
   position: absolute;
-  top: 300px;
+  top: 324px;
   right: 0;
   left: 0;
   display: flex;
