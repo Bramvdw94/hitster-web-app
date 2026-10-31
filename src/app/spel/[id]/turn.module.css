@@ -108,7 +108,8 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  opacity: calc(1 - var(--t) * 2.5);
+  /* Cross-fades with the bar in the same spot, so there are always play buttons in view. */
+  opacity: calc(1.6 - var(--t) * 2.5);
 }
 
 .bar {
@@ -120,7 +121,7 @@
   align-items: center;
   gap: 4px;
   height: 72px;
-  opacity: calc(var(--t) * 3 - 2);
+  opacity: calc(var(--t) * 2.5 - 0.6);
   pointer-events: none;
 }
 
