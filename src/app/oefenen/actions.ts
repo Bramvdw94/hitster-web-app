@@ -19,7 +19,8 @@ const MAX_ARTIST_LENGTH = 200;
 export async function startPractice(formData: FormData) {
   const weakOnly = formData.get("zwak") === "1";
   const filter = parseFilter((name) => formData.get(name));
-  // Ontdek's "Oefen deze nummers": stop a running session instead of returning to it.
+  // Ontdek's "Oefen deze nummers" and a new round on /oefenen: stop a running session
+  // instead of returning to it.
   const replace = formData.get("vervang") === "1";
   const editionIds = weakOnly
     ? []
