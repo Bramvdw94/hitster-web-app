@@ -148,7 +148,7 @@ function useShrinkingHero(board: RefObject<HTMLElement | null>) {
       const r = range();
       t = r > 0 ? Math.min(1, Math.max(0, -el.getBoundingClientRect().top / r)) : 0;
       el.style.setProperty("--t", t.toFixed(3));
-      el.dataset.collapsed = String(t > 0.6);
+      el.dataset.collapsed = String(t > 0.44);
     };
     const snap = () => {
       settle = 0;
