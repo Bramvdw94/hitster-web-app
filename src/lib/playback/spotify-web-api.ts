@@ -4,6 +4,8 @@ import { waitBeforeNextCall, type PlaybackProblem } from "./playback";
 
 // Ask the token route again a minute before the token dies.
 const TOKEN_MARGIN_MS = 60_000;
+// A request that hangs (a phone waking from sleep) must not block the queue for good.
+const CALL_TIMEOUT_MS = 10_000;
 
 export class PlaybackProblemError extends Error {
   constructor(readonly problem: PlaybackProblem) {
@@ -26,7 +28,12 @@ export async function getAccessToken(): Promise<string> {
   if (cachedToken && cachedToken.expiresAt - Date.now() > TOKEN_MARGIN_MS) {
     return cachedToken.accessToken;
   }
-  const response = await fetch("/api/spotify/token", { cache: "no-store" });
+  const response = await fetch("/api/spotify/token", {
+    cache: "no-store",
+    signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
+  }).catch(() => {
+    throw new PlaybackProblemError("verbinding");
+  });
   if (response.status === 401) throw new PlaybackProblemError("opnieuw_inloggen");
   if (!response.ok) throw new PlaybackProblemError("verbinding");
   const body = (await response.json()) as { accessToken: string; expiresAt: string };
@@ -52,6 +59,9 @@ export function spotifyCall(path: string, init: { method?: string; body?: unknow
         ...(init.body === undefined ? {} : { "Content-Type": "application/json" }),
       },
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
+      signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
+    }).catch(() => {
+      throw new PlaybackProblemError("verbinding");
     });
     if (response.status === 401) cachedToken = null;
     return response;

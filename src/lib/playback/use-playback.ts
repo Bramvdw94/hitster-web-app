@@ -363,6 +363,7 @@ export function usePlayback(): Playback {
         status === "starten" || status === "speelt" || status === "pauze" || status === "fout"
           ? trackIdRef.current
           : null;
+      const previous = targetRef.current;
       targetRef.current = next;
       setPlaybackTarget(next);
       remoteRequestRef.current++;
@@ -374,7 +375,14 @@ export function usePlayback(): Playback {
         if (trackId) startRemote(trackId);
         return;
       }
-      connectBrowser(false, trackId);
+      // Back to this phone: silence the device first, so it never plays on when the phone fails.
+      if (previous.kind === "device" && (status === "starten" || status === "speelt")) {
+        commandDevice(previous, "/me/player/pause").catch(() => {});
+      }
+      // While the device played, Spotify may have dropped this browser as a device even though
+      // the SDK still says ready (a play then gets 404). A fresh player, activated in this tap,
+      // is always known to Spotify.
+      connectBrowser(true, trackId);
     },
     [connectBrowser, startRemote],
   );
