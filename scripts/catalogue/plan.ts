@@ -14,6 +14,9 @@ export type SongRow = {
   year_status: YearStatus;
   playable_nl: boolean;
   cover_url: string | null;
+  musicbrainz_year: number | null;
+  // Read from the database only; the import sets it after asking MusicBrainz.
+  musicbrainz_checked_at?: string | null;
 };
 export type ArtistRow = {
   id: string;
@@ -34,7 +37,8 @@ export type Existing = {
   cards: CardRow[];
 };
 
-export type IncomingCard = JoinedCard & { track: SpotifyTrack | null };
+// `musicbrainzYear`: MusicBrainz' first-release year, null when it has none or was not asked yet.
+export type IncomingCard = JoinedCard & { track: SpotifyTrack | null; musicbrainzYear?: number | null };
 
 export type Changes = { editions: number; songs: number; artists: number; songArtists: number; cards: number };
 
@@ -151,6 +155,7 @@ export function planImport(
       year_status: card.yearStatus,
       playable_nl: card.track?.playableNl ?? false,
       cover_url: card.track?.coverUrl ?? null,
+      musicbrainz_year: card.musicbrainzYear ?? storedSongs.get(card.spotifyTrackId)?.musicbrainz_year ?? null,
     });
     creditsBySong.set(id, (card.track?.artists ?? []).map((a) => desiredArtists.get(a.id)!.id));
   }

@@ -66,12 +66,13 @@ export function baseTitle(title: string): string {
 
 // The earliest first-release year over recordings with this title by this artist. Remasters and
 // compilations are separate releases of the same recording, so the earliest date is the original.
-// Null when no hit with the same title scores 90 or more.
+// Null when no hit with the same title scores 90 or more; undefined when MusicBrainz could not be
+// asked, so the song is asked again next run.
 export async function lookupFirstReleaseYear(
   artist: string,
   title: string,
   { fetchFn = fetch, maxAttempts = 4, retryDelayMs = 2000 }: { fetchFn?: typeof fetch; maxAttempts?: number; retryDelayMs?: number } = {},
-): Promise<number | null> {
+): Promise<number | null | undefined> {
   const wanted = baseTitle(title);
   const clean = (text: string) => text.replace(/"/g, "");
   const query = encodeURIComponent(`recording:"${clean(wanted)}" AND artist:"${clean(artist)}"`);
@@ -81,8 +82,8 @@ export async function lookupFirstReleaseYear(
     retryDelayMs,
   });
   if (!response.ok) {
-    console.log(`MusicBrainz answered ${response.status} for ${artist} - ${title}; year stays missing`);
-    return null;
+    console.log(`MusicBrainz answered ${response.status} for ${artist} - ${title}; asking again next run`);
+    return undefined;
   }
 
   const years = (((await response.json()) as RecordingResponse).recordings ?? [])

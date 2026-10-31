@@ -98,3 +98,16 @@ export function withBestYear(card: JoinedCard, best: Map<string, JoinedCard>): J
   const { title, cardYear, yearSource, yearStatus } = from;
   return { ...card, title, cardYear, yearSource, yearStatus };
 }
+
+// MusicBrainz as a second opinion. A hitify year it agrees with becomes certain; a card without
+// a year takes MusicBrainz' year as uncertain. Songseeker's years and other cards stay as they are.
+export function withMusicbrainzYear<T extends JoinedCard>(card: T, musicbrainzYear: number | null): T {
+  if (musicbrainzYear === null) return card;
+  if (card.cardYear === null) {
+    return { ...card, cardYear: musicbrainzYear, yearSource: "musicbrainz", yearStatus: "uncertain" };
+  }
+  if (card.yearSource === "hitify" && card.yearStatus === "uncertain" && card.cardYear === musicbrainzYear) {
+    return { ...card, yearStatus: "certain" };
+  }
+  return card;
+}

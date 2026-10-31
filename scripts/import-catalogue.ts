@@ -10,7 +10,9 @@
 //
 // Every edition with a year list is joined first, so a song printed in several editions gets the
 // best year of all of them, whichever editions this run imports. A song no list has a year for
-// gets MusicBrainz' first-release year, looked up once and then reused from the database.
+// gets MusicBrainz' first-release year. MusicBrainz is asked once per song and its year stored, as a
+// second opinion: a hitify year is certain only when songseeker or MusicBrainz agrees, and the
+// report lists the cards where MusicBrainz disagrees, for Bram to check against his cards.
 //
 // Tracks an earlier run checked in the last 30 days are not looked up on Spotify again,
 // unless --recheck-spotify is given.
@@ -18,7 +20,7 @@ import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { applyPlan, loadExisting, loadStoredTracks } from "./catalogue/db";
 import { EDITIONS, JUMBO_FILE, selectEditions, SONGSEEKER_FILE, SONGSEEKER_SKU } from "./catalogue/editions";
-import { bestYears, joinEdition, type JoinResult, songseekerYearsByTrack, withBestYear } from "./catalogue/join";
+import { bestYears, joinEdition, type JoinResult, songseekerYearsByTrack, withBestYear, withMusicbrainzYear } from "./catalogue/join";
 import { lookupArtistKind, lookupFirstReleaseYear } from "./catalogue/musicbrainz";
 import { artistsNeedingKind, type IncomingCard, keepUnseenCards, planImport } from "./catalogue/plan";
 import { buildReport, formatReport } from "./catalogue/report";
@@ -129,24 +131,29 @@ async function main() {
 
     const existing = await loadExisting(db, config.sku, incoming);
 
-    // Years no list has: an earlier MusicBrainz year is reused, the rest are looked up once per run.
-    const storedYears = new Map(
-      existing.songs.filter((s) => s.year_source === "musicbrainz").map((s) => [s.spotify_track_id, s.card_year]),
+    // MusicBrainz' first-release year for every song, asked once and stored: it confirms a hitify
+    // year, or stands in when no list has one.
+    const storedSongs = new Map(existing.songs.map((song) => [song.spotify_track_id, song]));
+    const askMusicbrainz = [...new Set(incoming.map((c) => c.spotifyTrackId))].filter(
+      (id) => !storedSongs.get(id)?.musicbrainz_checked_at && !musicbrainzYears.has(id),
     );
-    const toLookUpYear = incoming.filter(
-      (c) => c.cardYear === null && !storedYears.has(c.spotifyTrackId) && !musicbrainzYears.has(c.spotifyTrackId),
-    );
-    if (toLookUpYear.length > 0) console.log(`Looking up ${toLookUpYear.length} years on MusicBrainz`);
-    for (const card of toLookUpYear) {
-      if (musicbrainzYears.has(card.spotifyTrackId)) continue;
+    if (askMusicbrainz.length > 0) console.log(`Checking ${askMusicbrainz.length} years on MusicBrainz`);
+    const askedMusicbrainz: string[] = [];
+    for (const id of askMusicbrainz) {
+      const card = incoming.find((c) => c.spotifyTrackId === id)!;
       const artist = card.track?.artists[0]?.name ?? card.cardArtist.split(", ")[0];
-      musicbrainzYears.set(card.spotifyTrackId, await lookupFirstReleaseYear(artist, card.title));
+      const year = await lookupFirstReleaseYear(artist, card.title);
+      if (year !== undefined) {
+        musicbrainzYears.set(id, year);
+        askedMusicbrainz.push(id);
+      }
       await sleep(MUSICBRAINZ_DELAY_MS);
     }
     incoming = incoming.map((card) => {
-      if (card.cardYear !== null) return card;
-      const year = storedYears.get(card.spotifyTrackId) ?? musicbrainzYears.get(card.spotifyTrackId) ?? null;
-      return year === null ? card : { ...card, cardYear: year, yearSource: "musicbrainz", yearStatus: "uncertain" };
+      const year = musicbrainzYears.has(card.spotifyTrackId)
+        ? musicbrainzYears.get(card.spotifyTrackId)!
+        : (storedSongs.get(card.spotifyTrackId)?.musicbrainz_year ?? null);
+      return { ...withMusicbrainzYear(card, year), musicbrainzYear: year };
     });
 
     const needKind = artistsNeedingKind(existing, incoming);
@@ -160,7 +167,7 @@ async function main() {
 
     const full = planImport(config, existing, incoming, kinds);
     const plan = waiting.length > 0 ? keepUnseenCards(full) : full;
-    if (!dryRun) await applyPlan(db, plan, lookedUp);
+    if (!dryRun) await applyPlan(db, plan, lookedUp, askedMusicbrainz);
 
     const report = formatReport(buildReport(config, incoming, join, plan.changes, waiting), { dryRun });
     console.log(`\n${report}`);

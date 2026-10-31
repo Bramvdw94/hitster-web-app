@@ -40,6 +40,11 @@ describe("lookupFirstReleaseYear", () => {
     await expect(lookupFirstReleaseYear("X", "Song", { fetchFn })).resolves.toBeNull();
   });
 
+  it("tells an unanswered request apart from no match", async () => {
+    const fetchFn = async () => json(500, {});
+    await expect(lookupFirstReleaseYear("X", "Song", { fetchFn })).resolves.toBeUndefined();
+  });
+
   it("strips version notes from a title", () => {
     expect(baseTitle("Mi Gente - Original Mix")).toBe("Mi Gente");
     expect(baseTitle("Walk This Way (feat. Aerosmith)")).toBe("Walk This Way");

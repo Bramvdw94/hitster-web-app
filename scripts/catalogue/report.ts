@@ -11,6 +11,8 @@ export type EditionReport = {
   withoutYear: number[];
   musicbrainzYears: number[];
   waitingForSpotify: number[];
+  // Cards whose year MusicBrainz' first release contradicts, to check against the printed card.
+  disagreements: { card: number; year: number; musicbrainz: number }[];
   uncertainYears: number[];
   notOnSpotify: number[];
   notPlayableNl: number[];
@@ -36,6 +38,11 @@ export function buildReport(
     withoutYear: numbers((c) => c.cardYear === null),
     musicbrainzYears: numbers((c) => c.yearSource === "musicbrainz"),
     waitingForSpotify,
+    disagreements: incoming.flatMap((c) =>
+      c.cardYear !== null && c.musicbrainzYear != null && c.yearSource !== "musicbrainz" && c.cardYear !== c.musicbrainzYear
+        ? [{ card: c.cardNumber, year: c.cardYear, musicbrainz: c.musicbrainzYear }]
+        : [],
+    ),
     uncertainYears: numbers((c) => c.yearStatus === "uncertain"),
     notOnSpotify: numbers((c) => c.track === null),
     notPlayableNl: numbers((c) => !c.track?.playableNl),
@@ -50,6 +57,13 @@ export function totalChanges(changes: Changes): number {
 // Card numbers only while the list stays readable: a hitify edition has hundreds of uncertain years.
 const list = (cards: number[]) =>
   cards.length === 0 ? "0" : cards.length > 20 ? String(cards.length) : `${cards.length} (cards ${cards.join(", ")})`;
+
+const disagreements = (rows: EditionReport["disagreements"]) =>
+  rows.length === 0
+    ? "0"
+    : rows.length > 20
+      ? String(rows.length)
+      : `${rows.length} (${rows.map((r) => `card ${r.card}: ${r.year}, MusicBrainz ${r.musicbrainz}`).join("; ")})`;
 
 export function formatReport(report: EditionReport, { dryRun = false } = {}): string {
   const c = report.changes;
@@ -67,6 +81,7 @@ export function formatReport(report: EditionReport, { dryRun = false } = {}): st
     `| Songs without a year | ${list(report.withoutYear)} |`,
     `| Uncertain years | ${list(report.uncertainYears)} |`,
     `| Years from MusicBrainz | ${list(report.musicbrainzYears)} |`,
+    `| Years MusicBrainz disagrees with | ${disagreements(report.disagreements)} |`,
     `| Not found on Spotify | ${list(report.notOnSpotify)} |`,
     `| Not playable in NL | ${list(report.notPlayableNl)} |`,
     `| Waiting for a later run (Spotify budget) | ${list(report.waitingForSpotify)} |`,
