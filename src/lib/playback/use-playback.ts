@@ -1,41 +1,46 @@
 "use client";
 
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { BROWSER_DEVICE_NAME, sameTarget, type DeviceTarget, type PlaybackTarget } from "./devices";
 import {
+  elapsedMs,
   initialPlaybackState,
   playbackReducer,
   problemFromSdkError,
   spotifyTrackUri,
-  waitBeforeNextCall,
+  type PlaybackEvent,
   type PlaybackProblem,
   type PlaybackState,
 } from "./playback";
+import {
+  PlaybackProblemError,
+  forgetAccessToken,
+  getAccessToken,
+  problemOf,
+  spotifyCall,
+  throwPlayerProblem,
+} from "./spotify-web-api";
+import { getPlaybackTarget, setPlaybackTarget, usePlaybackTarget } from "./target";
 
 const SDK_URL = "https://sdk.scdn.co/spotify-player.js";
-// Shown in the Spotify app's device list, so it must say nothing about the song.
-const DEVICE_NAME = "Jaartal";
 const READY_TIMEOUT_MS = 15_000;
 const START_TIMEOUT_MS = 12_000;
-// Ask the token route again a minute before the token dies.
-const TOKEN_MARGIN_MS = 60_000;
 
 export type Playback = {
   state: PlaybackState;
   // The song last asked for, for the "Open in Spotify" fallback.
   trackId: string | null;
+  // Where songs play: this browser, or a Spotify device the player picked.
+  target: PlaybackTarget;
   play: (trackId: string) => void;
   pause: () => void;
   resume: () => void;
   restart: () => void;
   // Throws the player away, connects a new one and starts the song again.
   retry: () => void;
+  // Must be called inside a tap. A song that was on moves along, from the start.
+  switchTarget: (target: PlaybackTarget) => void;
 };
-
-class PlaybackProblemError extends Error {
-  constructor(readonly problem: PlaybackProblem) {
-    super(problem);
-  }
-}
 
 let sdkLoading: Promise<void> | null = null;
 
@@ -56,59 +61,26 @@ function loadSdk(): Promise<void> {
   return sdkLoading;
 }
 
-let cachedToken: { accessToken: string; expiresAt: number } | null = null;
-
-// The token route from #19 refreshes on the server; the browser only ever sees access tokens.
-async function getAccessToken(): Promise<string> {
-  if (cachedToken && cachedToken.expiresAt - Date.now() > TOKEN_MARGIN_MS) {
-    return cachedToken.accessToken;
-  }
-  const response = await fetch("/api/spotify/token", { cache: "no-store" });
-  if (response.status === 401) throw new PlaybackProblemError("opnieuw_inloggen");
-  if (!response.ok) throw new PlaybackProblemError("verbinding");
-  const body = (await response.json()) as { accessToken: string; expiresAt: string };
-  cachedToken = { accessToken: body.accessToken, expiresAt: new Date(body.expiresAt).getTime() };
-  return body.accessToken;
-}
-
-let lastSpotifyCallAt: number | null = null;
-
-// The only Spotify Web API call the player makes, spaced out per waitBeforeNextCall.
+// Starts a song on this browser's SDK player.
 async function startTrackOnDevice(deviceId: string, trackId: string): Promise<void> {
-  const wait = waitBeforeNextCall(lastSpotifyCallAt, Date.now());
-  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
-  const accessToken = await getAccessToken();
-  lastSpotifyCallAt = Date.now();
-  const response = await fetch(
-    `https://api.spotify.com/v1/me/player/play?device_id=${encodeURIComponent(deviceId)}`,
-    {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ uris: [spotifyTrackUri(trackId)], position_ms: 0 }),
-    },
-  );
-  if (response.ok) return;
-  if (response.status === 401) {
-    cachedToken = null;
-    throw new PlaybackProblemError("opnieuw_inloggen");
-  }
-  if (response.status === 403) {
-    const body = (await response.json().catch(() => ({}))) as { error?: { reason?: string } };
-    throw new PlaybackProblemError(body.error?.reason === "PREMIUM_REQUIRED" ? "geen_premium" : "afspelen");
-  }
-  if (response.status === 429) throw new PlaybackProblemError("te_veel_verzoeken");
-  // 404 means Spotify no longer knows this browser as a device.
-  throw new PlaybackProblemError(response.status === 404 ? "verbinding" : "afspelen");
+  const response = await spotifyCall(`/me/player/play?device_id=${encodeURIComponent(deviceId)}`, {
+    method: "PUT",
+    body: { uris: [spotifyTrackUri(trackId)], position_ms: 0 },
+  });
+  if (!response.ok) await throwPlayerProblem(response, "verbinding");
 }
 
-function problemOf(error: unknown): PlaybackProblem {
-  return error instanceof PlaybackProblemError ? error.problem : "afspelen";
+// Sends a command to a Spotify Connect device. Nothing comes back from the device itself.
+async function commandDevice(device: DeviceTarget, path: string, body?: unknown): Promise<void> {
+  const join = path.includes("?") ? "&" : "?";
+  const response = await spotifyCall(`${path}${join}device_id=${encodeURIComponent(device.id)}`, { method: "PUT", body });
+  if (!response.ok) await throwPlayerProblem(response, "apparaat_weg");
 }
 
 // Phones show the media session on the lock screen. Keep the song a secret there too.
 function hideNowPlaying() {
   if (!("mediaSession" in navigator) || typeof MediaMetadata === "undefined") return;
-  navigator.mediaSession.metadata = new MediaMetadata({ title: DEVICE_NAME, artist: "?" });
+  navigator.mediaSession.metadata = new MediaMetadata({ title: BROWSER_DEVICE_NAME, artist: "?" });
 }
 
 type PlayerEvent =
@@ -140,7 +112,7 @@ function createSharedPlayer(): SharedPlayer {
   shared?.player.disconnect();
   const SpotifySdk = window.Spotify!;
   const player = new SpotifySdk.Player({
-    name: DEVICE_NAME,
+    name: BROWSER_DEVICE_NAME,
     volume: 0.8,
     getOAuthToken: (callback) => {
       getAccessToken()
@@ -165,7 +137,7 @@ function createSharedPlayer(): SharedPlayer {
   player.addListener("not_ready", () => emit(player, { type: "fout", problem: "verbinding" }));
   for (const event of ["initialization_error", "authentication_error", "account_error", "playback_error"] as const) {
     player.addListener(event, () => {
-      if (event === "authentication_error") cachedToken = null;
+      if (event === "authentication_error") forgetAccessToken();
       emit(player, { type: "fout", problem: problemFromSdkError(event) });
     });
   }
@@ -185,14 +157,19 @@ function sharedPlayer(): SharedPlayer {
 }
 
 // The record player's connection to Spotify. Modes use this and never touch the SDK.
+// Songs play on this browser through the SDK, or on a Spotify Connect device through the Web API.
 export function usePlayback(): Playback {
   const [state, dispatch] = useReducer(playbackReducer, initialPlaybackState);
   const stateRef = useRef(state);
+  const target = usePlaybackTarget();
+  const targetRef = useRef<PlaybackTarget>(getPlaybackTarget());
   const playerRef = useRef<Spotify.Player | null>(null);
   const deviceRef = useRef<Promise<string> | null>(null);
   const trackIdRef = useRef<string | null>(null);
   const [trackId, setTrackId] = useState<string | null>(null);
   const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Counts remote requests, so an answer to an older one changes nothing.
+  const remoteRequestRef = useRef(0);
 
   useEffect(() => {
     stateRef.current = state;
@@ -209,7 +186,7 @@ export function usePlayback(): Playback {
   const attachPlayer = useCallback((current: SharedPlayer): Spotify.Player => {
     playerRef.current = current.player;
     deviceRef.current = current.device;
-    if (current.ready) dispatch({ type: "klaar" });
+    if (current.ready || targetRef.current.kind === "device") dispatch({ type: "klaar" });
     return current.player;
   }, []);
 
@@ -221,7 +198,10 @@ export function usePlayback(): Playback {
 
   useEffect(() => {
     let cancelled = false;
+    const remoteRequests = remoteRequestRef;
     const onEvent = (event: PlayerEvent) => {
+      // While a Spotify device plays, the browser player only waits in reserve.
+      if (targetRef.current.kind === "device" && event.type !== "klaar") return;
       if (event.type === "klaar") dispatch({ type: "klaar" });
       else if (event.type === "fout") fail(event.problem);
       else {
@@ -240,18 +220,26 @@ export function usePlayback(): Playback {
       }
     };
     subscribers.add(onEvent);
+    // A device needs no browser player to start; the SDK still loads to switch back later.
+    if (targetRef.current.kind === "device") dispatch({ type: "klaar" });
     loadSdk()
       .then(() => {
         if (!cancelled) attachPlayer(sharedPlayer());
       })
       .catch((error) => {
-        if (!cancelled) fail(problemOf(error));
+        if (!cancelled && targetRef.current.kind === "browser") fail(problemOf(error));
       });
     return () => {
       cancelled = true;
       subscribers.delete(onEvent);
       // Leaving the turn stops the song; the player itself stays for the next turn.
-      playerRef.current?.pause().catch(() => {});
+      const current = targetRef.current;
+      if (current.kind === "device") {
+        if (stateRef.current.status === "speelt") commandDevice(current, "/me/player/pause").catch(() => {});
+      } else {
+        playerRef.current?.pause().catch(() => {});
+      }
+      remoteRequests.current++;
       dropPlayer();
     };
   }, [attachPlayer, dropPlayer, fail]);
@@ -274,10 +262,43 @@ export function usePlayback(): Playback {
           if (stateRef.current.status === "starten") fail("afspelen");
         }, START_TIMEOUT_MS);
       })().catch((error) => {
-        if (playerRef.current === player) fail(problemOf(error));
+        if (playerRef.current === player && targetRef.current.kind === "browser") fail(problemOf(error));
       });
     },
     [fail],
+  );
+
+  // Runs one command on the chosen device. Shows the result right away and corrects it on failure.
+  const remote = useCallback((run: (device: DeviceTarget) => Promise<void>, shown?: PlaybackEvent) => {
+    const device = targetRef.current;
+    if (device.kind !== "device") return;
+    const request = ++remoteRequestRef.current;
+    if (shown) dispatch(shown);
+    run(device).catch((error) => {
+      if (remoteRequestRef.current === request && targetRef.current === device) {
+        dispatch({ type: "fout", problem: problemOf(error) });
+      }
+    });
+  }, []);
+
+  // The device sends no updates, so the player counts on from the moment Spotify said yes.
+  const startRemote = useCallback(
+    (trackId: string) => {
+      const device = targetRef.current;
+      if (device.kind !== "device") return;
+      trackIdRef.current = trackId;
+      dispatch({ type: "starten" });
+      const request = ++remoteRequestRef.current;
+      commandDevice(device, "/me/player/play", { uris: [spotifyTrackUri(trackId)], position_ms: 0 })
+        .then(() => {
+          if (remoteRequestRef.current !== request) return;
+          dispatch({ type: "stand", paused: false, positionMs: 0, durationMs: 0, at: Date.now() });
+        })
+        .catch((error) => {
+          if (remoteRequestRef.current === request) dispatch({ type: "fout", problem: problemOf(error) });
+        });
+    },
+    [],
   );
 
   const play = useCallback(
@@ -285,50 +306,126 @@ export function usePlayback(): Playback {
       const player = playerRef.current;
       trackIdRef.current = trackId;
       setTrackId(trackId);
-      if (!player || stateRef.current.status === "verbinden" || stateRef.current.status === "fout") return;
+      const status = stateRef.current.status;
+      if (status === "verbinden" || status === "fout") return;
+      if (targetRef.current.kind === "device") {
+        startRemote(trackId);
+        return;
+      }
+      if (!player) return;
       startTrack(player, trackId);
     },
-    [startTrack],
+    [startRemote, startTrack],
+  );
+
+  // Connects the browser player, a fresh one if asked, and starts the song once it is ready.
+  const connectBrowser = useCallback(
+    (fresh: boolean, trackId: string | null) => {
+      dropPlayer();
+      dispatch({ type: "verbinden" });
+      if (!window.Spotify) {
+        loadSdk()
+          .then(() => attachPlayer(fresh ? createSharedPlayer() : sharedPlayer()))
+          .catch((error) => fail(problemOf(error)));
+        return;
+      }
+      const player = attachPlayer(fresh ? createSharedPlayer() : sharedPlayer());
+      if (!trackId) return;
+      // Activate inside this tap; the play request waits for the device itself.
+      const activated = player.activateElement();
+      deviceRef.current
+        ?.then(async () => {
+          await activated;
+          if (playerRef.current === player) startTrack(player, trackId);
+        })
+        .catch(() => {});
+    },
+    [attachPlayer, dropPlayer, fail, startTrack],
   );
 
   const retry = useCallback(() => {
-    dropPlayer();
-    dispatch({ type: "verbinden" });
-    if (!window.Spotify) {
-      loadSdk()
-        .then(() => attachPlayer(createSharedPlayer()))
-        .catch((error) => fail(problemOf(error)));
+    if (targetRef.current.kind === "device") {
+      remoteRequestRef.current++;
+      dispatch({ type: "verbinden" });
+      dispatch({ type: "klaar" });
+      if (trackIdRef.current) startRemote(trackIdRef.current);
       return;
     }
-    const player = attachPlayer(createSharedPlayer());
-    const trackId = trackIdRef.current;
-    if (!trackId) return;
-    // Activate inside this tap; the play request waits for the new device itself.
-    const activated = player.activateElement();
-    deviceRef.current
-      ?.then(async () => {
-        await activated;
-        if (playerRef.current === player) startTrack(player, trackId);
-      })
-      .catch(() => {});
-  }, [attachPlayer, dropPlayer, fail, startTrack]);
+    connectBrowser(true, trackIdRef.current);
+  }, [connectBrowser, startRemote]);
+
+  const switchTarget = useCallback(
+    (next: PlaybackTarget) => {
+      if (sameTarget(targetRef.current, next)) return;
+      const { status } = stateRef.current;
+      // A song that was on (or that failed) starts again on the new choice.
+      const trackId =
+        status === "starten" || status === "speelt" || status === "pauze" || status === "fout"
+          ? trackIdRef.current
+          : null;
+      targetRef.current = next;
+      setPlaybackTarget(next);
+      remoteRequestRef.current++;
+      if (startTimerRef.current) clearTimeout(startTimerRef.current);
+      if (next.kind === "device") {
+        // Spotify plays on one device at a time, so starting there silences this browser.
+        dispatch({ type: "verbinden" });
+        dispatch({ type: "klaar" });
+        if (trackId) startRemote(trackId);
+        return;
+      }
+      connectBrowser(false, trackId);
+    },
+    [connectBrowser, startRemote],
+  );
 
   const pause = useCallback(() => {
+    if (targetRef.current.kind === "device") {
+      const now = Date.now();
+      remote((device) => commandDevice(device, "/me/player/pause"), {
+        type: "stand",
+        paused: true,
+        positionMs: elapsedMs(stateRef.current, now),
+        durationMs: 0,
+        at: now,
+      });
+      return;
+    }
     playerRef.current?.pause().catch(() => fail("afspelen"));
-  }, [fail]);
+  }, [fail, remote]);
 
   const resume = useCallback(() => {
+    if (targetRef.current.kind === "device") {
+      remote((device) => commandDevice(device, "/me/player/play"), {
+        type: "stand",
+        paused: false,
+        positionMs: stateRef.current.positionMs,
+        durationMs: 0,
+        at: Date.now(),
+      });
+      return;
+    }
     playerRef.current?.resume().catch(() => fail("afspelen"));
-  }, [fail]);
+  }, [fail, remote]);
 
   const restart = useCallback(() => {
+    if (targetRef.current.kind === "device") {
+      remote((device) => commandDevice(device, "/me/player/seek?position_ms=0"), {
+        type: "stand",
+        paused: stateRef.current.status === "pauze",
+        positionMs: 0,
+        durationMs: 0,
+        at: Date.now(),
+      });
+      return;
+    }
     const player = playerRef.current;
     if (!player) return;
     player
       .seek(0)
       .then(() => (stateRef.current.status === "pauze" ? player.resume() : undefined))
       .catch(() => fail("afspelen"));
-  }, [fail]);
+  }, [fail, remote]);
 
-  return { state, trackId, play, pause, resume, restart, retry };
+  return { state, trackId, target, play, pause, resume, restart, retry, switchTarget };
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { PlaybackSuggestion } from "@/components/device-picker/playback-suggestion";
 import { findActiveGame, gamePath } from "@/lib/game/games";
 import { MAX_NAME_LENGTH } from "@/lib/game/together";
 import { createClient } from "@/lib/supabase/server";
@@ -68,6 +69,7 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/samen">["sear
       <PlayerNames first={(profile?.data?.display_name ?? "").slice(0, MAX_NAME_LENGTH)} />
       <VariantPicker />
       <EditionPicker editions={editions} allCount={allCount ?? 0} />
+      <PlaybackSuggestion />
       <StartButton replaces={running !== null} disabled={!allCount} />
     </form>
   );
