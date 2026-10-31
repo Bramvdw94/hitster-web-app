@@ -1,0 +1,583 @@
+/* The solo game screen (prototypes "staand 7" and "liggend 13", 2026-10-31). Upright it is
+   a ladder under a record that shrinks into a bar; with the phone on its side the timeline is
+   drawn to scale under a slim player bar. */
+
+.stage {
+  display: contents;
+}
+
+/* ---------- Upright ---------- */
+
+.portrait {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: -24px;
+}
+
+/* The record shrinks into the bottom 72px of this header while you scroll; --t is set from
+   the scroll position (0 = full record, 1 = bar). The header sticks with only the bar showing. */
+.hero {
+  --t: 0;
+  --bar: 72;
+  position: sticky;
+  top: -300px;
+  z-index: 5;
+  height: 372px;
+  margin: 0 -16px;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  height: 72px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(31, 23, 72, 0.94);
+  opacity: var(--t);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.topbar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  opacity: calc(1 - var(--t) * 3);
+}
+
+.back {
+  padding: 4px 0;
+  color: var(--lilac);
+  font-weight: 700;
+}
+
+.songNumber {
+  font-family: var(--font-display);
+  font-size: 26px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.heroRecord {
+  position: absolute;
+  top: calc(66px + 248px * var(--t));
+  left: calc((100% - 206px) / 2 * (1 - var(--t)) + 16px * var(--t));
+  width: calc(206px - 162px * var(--t));
+}
+
+/* The tonearm fades out as the record shrinks. */
+.heroRecord > :nth-child(2) {
+  opacity: calc(1 - var(--t) * 4);
+}
+
+.heroStatus {
+  position: absolute;
+  top: 276px;
+  right: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  opacity: calc(1 - var(--t) * 4);
+}
+
+.heroStatus > p:first-child {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.heroControls {
+  position: absolute;
+  top: 300px;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  opacity: calc(1 - var(--t) * 2.5);
+}
+
+.bar {
+  position: absolute;
+  right: 12px;
+  bottom: 0;
+  left: 70px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 72px;
+  opacity: calc(var(--t) * 3 - 2);
+  pointer-events: none;
+}
+
+.hero[data-collapsed="true"] .heroControls,
+.hero[data-collapsed="true"] .topbar {
+  pointer-events: none;
+}
+
+.hero[data-collapsed="true"] .bar {
+  pointer-events: auto;
+}
+
+.barInfo {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.barInfo b {
+  font-weight: 800;
+}
+
+.barInfo span {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTime {
+  width: auto;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.barPlay {
+  width: 46px;
+  height: 46px;
+}
+
+.barRound {
+  width: 40px;
+  height: 40px;
+  background: transparent;
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 110px;
+}
+
+/* Room to scroll the revealed card above the reveal sheet. */
+.boardReveal {
+  padding-bottom: 60dvh;
+}
+
+.boardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.count {
+  color: var(--muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.count b {
+  margin-right: 2px;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.coin {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+}
+
+.coinOn {
+  border-color: var(--close);
+  background: radial-gradient(circle at 35% 35%, #fff1c2 0%, var(--close) 60%);
+}
+
+/* Overslaan · hint · Kopen, always under your thumb. */
+.actionBar {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 18px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(transparent, var(--bg) 28%);
+}
+
+.spend {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.spend svg {
+  width: 22px;
+  height: 22px;
+}
+
+.spend:disabled {
+  cursor: default;
+  opacity: 0.35;
+}
+
+.badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--close);
+  box-shadow: 0 0 0 2px var(--bg);
+  color: #2b1d00;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.hint {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  min-width: 0;
+  height: 52px;
+  padding: 0 10px;
+  overflow: hidden;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hintOn {
+  border-style: solid;
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* ---------- On its side ---------- */
+
+.landscape {
+  display: none;
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .portrait {
+    display: none;
+  }
+
+  .landscape {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-rows: 54px minmax(0, 1fr) 62px;
+    gap: 4px;
+    padding: 6px max(14px, env(safe-area-inset-right, 0px)) max(8px, env(safe-area-inset-bottom, 0px))
+      max(14px, env(safe-area-inset-left, 0px));
+    background:
+      radial-gradient(120% 60% at 50% 0%, var(--bg-glow) 0%, transparent 70%),
+      var(--bg);
+  }
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.backSmall {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 40px;
+  color: var(--lilac);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.smallRecord {
+  width: 44px;
+}
+
+.rowTime {
+  width: 44px;
+  font-size: 20px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.rowDevice {
+  min-width: 0;
+  max-width: 180px;
+}
+
+.topRow .spend {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.topRow .spend svg {
+  width: 18px;
+  height: 18px;
+}
+
+.topRow .badge {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+.topRow .count b {
+  font-size: 22px;
+}
+
+.floatingProblem {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  z-index: 30;
+  width: min(440px, 80vw);
+  transform: translateX(-50%);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.bottomRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.rowHint {
+  padding-left: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- Reveal ---------- */
+
+.reveal {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 480px;
+  max-height: 72dvh;
+  margin: 0 auto;
+  padding: 16px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  border: 2px solid var(--line);
+  border-bottom: 0;
+  border-radius: 22px 22px 0 0;
+  background: #2a2163;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
+  animation: rise 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    animation: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .reveal {
+    top: 8px;
+    right: max(14px, env(safe-area-inset-right, 0px));
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    left: auto;
+    width: 330px;
+    max-height: none;
+    padding: 14px;
+    border-bottom: 2px solid var(--line);
+    border-radius: 20px;
+  }
+}
+
+.revealGood {
+  border-color: var(--good);
+}
+
+.revealWrong {
+  border-color: var(--wrong);
+}
+
+.sleeve {
+  display: flex;
+  gap: 14px;
+}
+
+.cover {
+  flex: none;
+  width: 76px;
+  height: 76px;
+  border-radius: 10px;
+  background: var(--line);
+  object-fit: cover;
+}
+
+.sleeveText {
+  display: grid;
+  align-content: start;
+  min-width: 0;
+}
+
+.verdict {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.revealGood .verdict,
+.revealGood .sleeveYear {
+  color: var(--good);
+}
+
+.revealWrong .verdict,
+.revealWrong .sleeveYear {
+  color: var(--wrong);
+}
+
+.skipped .verdict {
+  color: var(--close);
+}
+
+.sleeveYear {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 0.95;
+}
+
+.uncertain {
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sleeveTitle {
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.sleeveArtist {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.scores b {
+  color: var(--text);
+}
+
+.good {
+  color: var(--good) !important;
+}
+
+.wrong {
+  color: var(--wrong) !important;
+}
+
+.typed {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record {
+  color: var(--close);
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0.04em;
+}
+
+.next {
+  flex: none;
+  height: 52px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #2a0d00;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}

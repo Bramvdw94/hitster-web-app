@@ -1,0 +1,195 @@
+/* The orange card for the song being placed. Dark ink on the accent, like the record label. */
+.card,
+.bar {
+  color: #2a0d00;
+  background: var(--accent);
+  box-shadow: 0 10px 30px rgba(255, 122, 61, 0.28);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  animation: slide-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.disc {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent) 0 18%, #0b0816 19% 100%);
+}
+
+.heading {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.heading b {
+  font-weight: 800;
+}
+
+.heading span {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.clear {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(42, 13, 0, 0.12);
+  color: inherit;
+  cursor: pointer;
+}
+
+.clear svg {
+  width: 15px;
+  height: 15px;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* 16px text, so iOS does not zoom in on focus. */
+.input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid rgba(42, 13, 0, 0.28);
+  border-radius: 10px;
+  background: rgba(255, 244, 234, 0.4);
+  color: #2a0d00;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.input::placeholder {
+  color: rgba(42, 13, 0, 0.55);
+  font-weight: 600;
+}
+
+.input:focus {
+  outline: 2px solid #2a0d00;
+  outline-offset: 0;
+  background: rgba(255, 244, 234, 0.65);
+}
+
+/* The Expert year ruler sits on a dark inset, so it keeps its own colours. */
+.ruler {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.place {
+  height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: #2a0d00;
+  color: var(--accent);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.place:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.note {
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* Landscape: everything on one row under the axis. */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 16px;
+  animation: rise 0.25s ease-out;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.bar .disc {
+  width: 34px;
+  height: 34px;
+}
+
+.bar .heading {
+  flex: none;
+  width: 132px;
+}
+
+.bar .heading b {
+  font-size: 14px;
+}
+
+.bar .heading span {
+  font-size: 11px;
+}
+
+.bar .input {
+  flex: 1;
+  height: 40px;
+}
+
+.bar .yearInput {
+  flex: none;
+  width: 76px;
+  text-align: center;
+}
+
+.bar .place {
+  flex: none;
+  height: 40px;
+  padding: 0 14px;
+}

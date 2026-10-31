@@ -158,7 +158,7 @@ export function PracticeTurn(props: Props) {
   return (
     <>
       {status}
-      <RecordPlayer playback={playback} />
+      <RecordPlayer playback={playback} started={started} onStart={startSong} />
 
       {started ? (
         <form
@@ -197,14 +197,7 @@ export function PracticeTurn(props: Props) {
           </div>
         </form>
       ) : (
-        <button
-          type="button"
-          className={styles.cta}
-          onClick={startSong}
-          disabled={playback.state.status === "verbinden"}
-        >
-          {playback.state.status === "verbinden" ? "Speler verbinden…" : "Zet de plaat op"}
-        </button>
+        <p className={styles.hint}>Druk op de oranje play om het nummer te starten.</p>
       )}
     </>
   );

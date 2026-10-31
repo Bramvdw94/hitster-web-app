@@ -12,6 +12,7 @@
   --close: #ffd166;
   --wrong: #ff6b8a;
   --spotify: #1ed760;
+  --grey: #4a4178;
 
   --radius-sm: 12px;
   --radius-md: 14px;
@@ -29,10 +30,11 @@
   padding: 0;
 }
 
+/* clip, not hidden: hidden would turn body into a scroll box and stop sticky headers. */
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {

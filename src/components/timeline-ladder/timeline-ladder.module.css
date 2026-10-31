@@ -126,3 +126,86 @@
   font-weight: 800;
   cursor: default;
 }
+
+/* Compact: one line per card ("1978 Le Freak · Chic") and thin dashed gaps, so ten cards fit
+   on one phone screen. The gaps stay 28px tall to tap, but draw as a thin line. */
+.compact {
+  gap: 0;
+}
+
+.compact .card {
+  min-height: 46px;
+  padding: 6px 12px;
+  gap: 10px;
+  border-radius: 10px;
+}
+
+.compact .year {
+  width: 48px;
+  font-size: 26px;
+}
+
+.compact .text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.compact .text b {
+  flex: 0 1 auto;
+  font-size: 14px;
+}
+
+.compact .text span {
+  flex: 1 1 0;
+  min-width: 40px;
+}
+
+.compact .text span::before {
+  content: "· ";
+}
+
+.compact .gap:not(.selected):not(.taken) {
+  position: relative;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  font-size: 0;
+}
+
+.compact .gap:not(.selected):not(.taken)::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  right: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 10px);
+}
+
+.compact .gap:not(.selected):not(.taken):hover::after {
+  background: repeating-linear-gradient(90deg, var(--lilac) 0 6px, transparent 6px 10px);
+}
+
+.compact .selected {
+  margin: 4px 0;
+}
+
+/* The mystery card in the chosen gap, with a bigger orange dot on the rail. */
+.mystery {
+  position: relative;
+  margin: 6px 0;
+}
+
+.mystery::before {
+  content: "";
+  position: absolute;
+  top: 24px;
+  left: -28px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 122, 61, 0.25);
+}

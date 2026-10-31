@@ -14,6 +14,18 @@ import styles from "../spel.module.css";
 
 export const metadata = { title: "Spel · Jaartal" };
 
+// The game screen draws its own top bar; the result and the loading state use this one.
+function PageTop() {
+  return (
+    <header className={shared.top}>
+      <Link href="/" className={shared.back}>
+        ← Home
+      </Link>
+      <h1 className={shared.topTitle}>Spel</h1>
+    </header>
+  );
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function Result({ game }: { game: Game }) {
@@ -27,6 +39,7 @@ async function Result({ game }: { game: Game }) {
 
   return (
     <>
+      <PageTop />
       <section className={shared.total} aria-label="Score">
         <p className={shared.section}>Solo · {VARIANT_NAMES[game.variant]}</p>
         {score === null ? (
@@ -107,13 +120,14 @@ async function GameView({ params }: { params: PageProps<"/spel/[id]">["params"] 
 export default function GameViewPage({ params }: PageProps<"/spel/[id]">) {
   return (
     <main className={shared.page}>
-      <header className={shared.top}>
-        <Link href="/" className={shared.back}>
-          ← Home
-        </Link>
-        <h1 className={shared.topTitle}>Spel</h1>
-      </header>
-      <Suspense fallback={<div className={shared.placeholder} />}>
+      <Suspense
+        fallback={
+          <>
+            <PageTop />
+            <div className={shared.placeholder} />
+          </>
+        }
+      >
         <GameView params={params} />
       </Suspense>
     </main>
