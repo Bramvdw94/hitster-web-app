@@ -9,7 +9,8 @@ export type PlaybackProblem =
   | "browser" // this browser cannot run the SDK
   | "geen_premium"
   | "opnieuw_inloggen"
-  | "te_veel_verzoeken"; // Spotify rate-limits the app (429)
+  | "te_veel_verzoeken" // Spotify rate-limits the app (429)
+  | "apparaat_weg"; // the chosen Spotify device is off or asleep
 
 export type PlaybackState = {
   status: PlaybackStatus;
@@ -87,6 +88,8 @@ export const problemMessages: Record<PlaybackProblem, string> = {
   opnieuw_inloggen: "Je Spotify-login is verlopen. Log uit en log opnieuw in met Spotify.",
   te_veel_verzoeken:
     "Spotify blokkeert de app even omdat er te veel verzoeken waren. Probeer het later opnieuw, of open het nummer in Spotify.",
+  apparaat_weg:
+    "Het gekozen apparaat is niet meer te vinden bij Spotify. Misschien staat het uit of slaapt het. Open Spotify erop, of speel op deze telefoon.",
 };
 
 // Where the song is now, counting on from the last measurement while it plays.

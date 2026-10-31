@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { PlaybackSuggestion } from "@/components/device-picker/playback-suggestion";
 import { findActiveGame, gamePath, personalBest } from "@/lib/game/games";
 import { WINNING_CARDS } from "@/lib/game/state";
 import { createClient } from "@/lib/supabase/server";
@@ -127,6 +128,7 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/spel">["searc
       </fieldset>
 
       <EditionPicker editions={editions} allCount={allCount ?? 0} />
+      <PlaybackSuggestion />
       <StartButton replaces={running !== null} disabled={!allCount} />
     </form>
   );

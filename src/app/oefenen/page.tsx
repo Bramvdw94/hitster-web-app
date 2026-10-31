@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { PlaybackSuggestion } from "@/components/device-picker/playback-suggestion";
 import { ArtistSearch } from "@/components/artist-search/artist-search";
 import { artistName, catalogueYears } from "@/lib/explore/explore";
 import { decadesBetween, fromSearchParams } from "@/lib/practice/filter";
@@ -82,6 +83,7 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/oefenen">["se
             initialTo={filter.yearTo}
           />
         </div>
+        <PlaybackSuggestion />
         <StartButton label={running ? "Nieuwe ronde" : "Start oefenen"} replaces={running !== null} disabled={!allCount} />
       </form>
       <form action={startPractice} className={styles.weak}>
