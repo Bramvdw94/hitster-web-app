@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { type RefObject, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GuessCard } from "@/components/guess-card/guess-card";
@@ -123,31 +123,71 @@ function SpendButton({ kind, disabled, onClick }: { kind: "skip" | "buy"; disabl
 
 // Scrolling down shrinks the record into a bar at the top (prototype "staand 1"): --t runs
 // from 0 (full record) to 1 (bar), and the CSS does the rest.
-function useShrinkingHero() {
+// The page scroll position at which the record has fully shrunk into the bar: the board then
+// starts right under the bar.
+function collapsedScrollY(hero: HTMLElement, board: HTMLElement): number {
+  const bar = parseFloat(getComputedStyle(hero).getPropertyValue("--bar") || "72");
+  const gap = parseFloat(getComputedStyle(board.parentElement ?? board).rowGap) || 0;
+  return window.scrollY + board.getBoundingClientRect().top - bar - gap;
+}
+
+// Sets --t on the header from the scroll position. When scrolling stops halfway, the record
+// finishes the move to whichever end is nearer, so it never hangs half shrunk.
+function useShrinkingHero(board: RefObject<HTMLElement | null>) {
   const hero = useRef<HTMLElement>(null);
   useEffect(() => {
     const el = hero.current;
     if (!el) return;
     let frame = 0;
+    let settle = 0;
+    let t = 0;
+    let touching = false;
+    const range = () => el.offsetHeight - parseFloat(getComputedStyle(el).getPropertyValue("--bar") || "72");
     const update = () => {
       frame = 0;
-      const range = el.offsetHeight - parseFloat(getComputedStyle(el).getPropertyValue("--bar") || "72");
-      const t = range > 0 ? Math.min(1, Math.max(0, -el.getBoundingClientRect().top / range)) : 0;
+      const r = range();
+      t = r > 0 ? Math.min(1, Math.max(0, -el.getBoundingClientRect().top / r)) : 0;
       el.style.setProperty("--t", t.toFixed(3));
       el.dataset.collapsed = String(t > 0.6);
     };
+    const snap = () => {
+      settle = 0;
+      const boardEl = board.current;
+      if (touching || !boardEl || el.offsetParent === null || t <= 0.01 || t >= 0.99) return;
+      const collapsed = collapsedScrollY(el, boardEl);
+      window.scrollTo({ top: t < 0.5 ? Math.max(0, collapsed - range()) : collapsed, behavior: "smooth" });
+    };
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
+      window.clearTimeout(settle);
+      settle = window.setTimeout(snap, 180);
+    };
+    // Never pull the page from under a finger: wait until it lets go.
+    const onTouchStart = () => {
+      touching = true;
+      window.clearTimeout(settle);
+    };
+    const onTouchEnd = () => {
+      touching = false;
+      window.clearTimeout(settle);
+      settle = window.setTimeout(snap, 180);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
     update();
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
       cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
     };
-  }, []);
+  }, [board]);
   return hero;
 }
 
@@ -170,16 +210,25 @@ export function SoloTurn(props: Props) {
   const [reveal, setReveal] = useState<PlacementReveal | null>(null);
   const [problem, setProblem] = useState<keyof typeof problemText | null>(null);
   const [pending, startTransition] = useTransition();
-  const hero = useShrinkingHero();
   const board = useRef<HTMLElement>(null);
+  const hero = useShrinkingHero(board);
   const expert = props.variant === "expert";
 
-  // Show the revealed card: scroll the upright ladder to it.
+  // Show the revealed card: shrink the record into the bar and put the card in the middle of
+  // the space between the bar and the reveal sheet.
   useEffect(() => {
     if (!reveal) return;
-    const card = board.current?.querySelector("[data-mark]");
-    if (card instanceof HTMLElement && card.offsetParent !== null) card.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [reveal]);
+    const heroEl = hero.current;
+    const boardEl = board.current;
+    const card = boardEl?.querySelector("[data-mark]");
+    if (!heroEl || !boardEl || !(card instanceof HTMLElement) || card.offsetParent === null) return;
+    const bar = parseFloat(getComputedStyle(heroEl).getPropertyValue("--bar") || "72");
+    const sheet = document.querySelector<HTMLElement>("[data-reveal-sheet]");
+    const free = window.innerHeight - (sheet?.offsetHeight ?? 0) - bar;
+    const rect = card.getBoundingClientRect();
+    const centered = window.scrollY + rect.top - bar - (free - rect.height) / 2;
+    window.scrollTo({ top: Math.max(collapsedScrollY(heroEl, boardEl), centered), behavior: "smooth" });
+  }, [reveal, hero]);
 
   function startSong() {
     playback.play(trackId);
@@ -377,7 +426,7 @@ function Reveal({ reveal, canCorrectYears, onNext }: { reveal: PlacementReveal; 
   const naming = reveal.naming;
   const tone = reveal.kind === "skipped" ? styles.skipped : reveal.won ? styles.revealGood : styles.revealWrong;
   return (
-    <section className={`${styles.reveal} ${tone}`} aria-label="Het nummer">
+    <section className={`${styles.reveal} ${tone}`} aria-label="Het nummer" data-reveal-sheet>
       <div className={styles.sleeve}>
         {reveal.coverUrl ? (
           // Spotify's own cover, shown as ADR 0001 requires.

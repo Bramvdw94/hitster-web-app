@@ -209,3 +209,10 @@
   background: var(--accent);
   box-shadow: 0 0 0 4px rgba(255, 122, 61, 0.25);
 }
+
+/* Compact cards touch each other, so the good/wrong ring is drawn inside the card; outside,
+   the next card would cover its bottom edge. */
+.compact .good,
+.compact .wrong {
+  outline-offset: -2px;
+}
