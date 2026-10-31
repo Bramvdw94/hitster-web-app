@@ -1,3 +1,5 @@
+import { ZoekhulpToggle } from "@/components/zoekhulp-toggle/zoekhulp-toggle";
+import { zoekhulpOn } from "@/lib/zoekhulp/server";
 import Link from "next/link";
 import { Suspense } from "react";
 import { PlaybackSuggestion } from "@/components/device-picker/playback-suggestion";
@@ -83,6 +85,7 @@ async function Setup({ searchParams }: { searchParams: PageProps<"/oefenen">["se
             initialTo={filter.yearTo}
           />
         </div>
+        <ZoekhulpToggle initial={await zoekhulpOn()} />
         <PlaybackSuggestion />
         <StartButton label={running ? "Nieuwe ronde" : "Start oefenen"} replaces={running !== null} disabled={!allCount} />
       </form>
