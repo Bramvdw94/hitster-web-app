@@ -1,17 +1,29 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { RecordPlayer } from "@/components/record-player/record-player";
+import { GuessCard } from "@/components/guess-card/guess-card";
+import {
+  DeviceButton,
+  ElapsedTime,
+  OnDevice,
+  PlayButton,
+  PlaybackProblem,
+  RestartButton,
+  Vinyl,
+  playbackStatusText,
+} from "@/components/record-player/record-player";
 import { TimelineLadder, type LadderCard } from "@/components/timeline-ladder/timeline-ladder";
+import { YearAxis } from "@/components/year-axis/year-axis";
 import { YearCorrection } from "@/components/year-correction/year-correction";
-import { DEFAULT_YEAR } from "@/components/year-ruler/ruler";
-import { YearRuler } from "@/components/year-ruler/year-ruler";
+import { clampYear, DEFAULT_YEAR } from "@/components/year-ruler/ruler";
+import { gapLabel } from "@/lib/game/placement";
 import { BUY_COST, MAX_TOKENS, SKIP_COST, WINNING_CARDS, type TimelineCard, type Variant } from "@/lib/game/state";
 import { usePlayback } from "@/lib/playback/use-playback";
 import { buySoloCard, placeSoloCard, skipSoloSong, type PlacementReveal, type PlacementResult } from "../actions";
 import shared from "../../oefenen/oefenen.module.css";
-import styles from "../spel.module.css";
+import styles from "./turn.module.css";
 
 type Props = {
   gameId: string;
@@ -63,30 +75,86 @@ function verdictOf(reveal: PlacementReveal): string {
 
 function yearText(guessed: number, cardYear: number): string {
   const off = Math.abs(guessed - cardYear);
-  return off === 0 ? "Precies" : `${off} jaar ernaast`;
+  return off === 0 ? "precies" : `${off} jaar ernaast`;
 }
 
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
-// Small counters above the timeline: one coin per token, out of the five you can hold.
-function Tokens({ count }: { count: number }) {
+// One coin per token, out of the five you can hold.
+function Coins({ count }: { count: number }) {
   return (
-    <p className={styles.tokens} aria-label={`${count} van ${MAX_TOKENS} tokens`}>
-      <span className={styles.tokensLabel}>Tokens</span>
+    <span className={styles.coins} aria-label={`${count} van ${MAX_TOKENS} tokens`} role="img">
       {Array.from({ length: MAX_TOKENS }, (_, i) => (
-        <span key={i} className={`${styles.token} ${i < count ? styles.tokenOn : ""}`} aria-hidden="true" />
+        <span key={i} className={`${styles.coin} ${i < count ? styles.coinOn : ""}`} />
       ))}
-    </p>
+    </span>
   );
 }
 
-function Mark({ right }: { right: boolean }) {
-  return <dd className={right ? shared.good : shared.wrong}>{right ? "Goed" : "Fout"}</dd>;
+// Overslaan and Kopen as small icon buttons with their token cost on a coin badge.
+function SpendButton({ kind, disabled, onClick }: { kind: "skip" | "buy"; disabled: boolean; onClick: () => void }) {
+  const cost = kind === "skip" ? SKIP_COST : BUY_COST;
+  return (
+    <button
+      type="button"
+      className={styles.spend}
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={kind === "skip" ? `Overslaan voor ${cost} token` : `Kaart kopen voor ${cost} tokens`}
+      title={kind === "skip" ? "Overslaan" : "Kaart kopen"}
+    >
+      {kind === "skip" ? (
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 5.5l9.5 6.5L5 18.5z" fill="currentColor" />
+          <path d="M18 5.5v13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <rect x="5" y="3" width="14" height="18" rx="2.5" />
+          <path d="M12 8.5v7M8.5 12h7" />
+        </svg>
+      )}
+      <span className={styles.badge} aria-hidden="true">
+        {cost}
+      </span>
+    </button>
+  );
 }
 
-// One turn after another: listen, maybe type artist and title (and the year in Expert), tap a
-// gap and place, or spend tokens to skip or buy; then the sleeve reveal. The server checks
-// every move; this only shows what it sends back.
+// Scrolling down shrinks the record into a bar at the top (prototype "staand 1"): --t runs
+// from 0 (full record) to 1 (bar), and the CSS does the rest.
+function useShrinkingHero() {
+  const hero = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = hero.current;
+    if (!el) return;
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const range = el.offsetHeight - parseFloat(getComputedStyle(el).getPropertyValue("--bar") || "72");
+      const t = range > 0 ? Math.min(1, Math.max(0, -el.getBoundingClientRect().top / range)) : 0;
+      el.style.setProperty("--t", t.toFixed(3));
+      el.dataset.collapsed = String(t > 0.6);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update();
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+  return hero;
+}
+
+// One turn after another: start the song, tap a gap, name the song on the orange card and
+// place it, or spend tokens to skip or buy; then the reveal. The server checks every move;
+// this only shows what it sends back. Upright it is a ladder under a shrinking record; on its
+// side it is the timeline to scale under a slim player bar.
 export function SoloTurn(props: Props) {
   const router = useRouter();
   const playback = usePlayback();
@@ -102,7 +170,16 @@ export function SoloTurn(props: Props) {
   const [reveal, setReveal] = useState<PlacementReveal | null>(null);
   const [problem, setProblem] = useState<keyof typeof problemText | null>(null);
   const [pending, startTransition] = useTransition();
+  const hero = useShrinkingHero();
+  const board = useRef<HTMLElement>(null);
   const expert = props.variant === "expert";
+
+  // Show the revealed card: scroll the upright ladder to it.
+  useEffect(() => {
+    if (!reveal) return;
+    const card = board.current?.querySelector("[data-mark]");
+    if (card instanceof HTMLElement && card.offsetParent !== null) card.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [reveal]);
 
   function startSong() {
     playback.play(trackId);
@@ -125,7 +202,7 @@ export function SoloTurn(props: Props) {
 
   function place() {
     if (gap === null) return;
-    play(() => placeSoloCard(props.gameId, placed, gap, { artist, title, year: expert ? year : null }));
+    play(() => placeSoloCard(props.gameId, placed, gap, { artist, title, year: expert ? clampYear(year) : null }));
   }
 
   function next() {
@@ -149,180 +226,215 @@ export function SoloTurn(props: Props) {
     setReveal(null);
   }
 
-  if (reveal) {
-    const cards = timelineAfter(reveal).length;
-    const naming = reveal.naming;
+  const song = reveal ? reveal.placed : placed + 1;
+  const cardsNow = reveal ? timelineAfter(reveal).length : timeline.length;
+  const cards = reveal ? revealLadder(reveal) : toLadder(timeline);
+  const years = timeline.map((c) => c.year);
+  const where = gap === null ? "" : gapLabel(years, gap);
+  const locked = !started || pending || reveal !== null;
+  const hint = !started
+    ? "Druk op play en luister"
+    : gap === null
+      ? "Tik tussen twee kaarten"
+      : "Vul in en tik Plaats hier";
+
+  function guess(layout: "card" | "bar") {
     return (
-      <>
-        <p className={shared.status}>
-          <span>
-            Nummer <b>{reveal.placed}</b>
-          </span>
-          <span>
-            <b>{cards}</b> van {WINNING_CARDS} kaarten
-          </span>
-        </p>
-        <p className={`${styles.verdict} ${reveal.won ? shared.good : reveal.kind === "skipped" ? "" : shared.wrong}`}>
-          {verdictOf(reveal)}
-        </p>
-
-        <section className={shared.sleeve} aria-label="Het nummer">
-          {reveal.coverUrl ? (
-            // Spotify's own cover, shown as ADR 0001 requires.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img className={shared.cover} src={reveal.coverUrl} alt="" width={96} height={96} />
-          ) : (
-            <span className={shared.cover} aria-hidden="true" />
-          )}
-          <div className={shared.sleeveText}>
-            <p className={shared.sleeveYear}>{reveal.cardYear}</p>
-            {reveal.uncertainYear ? <p className={shared.uncertain}>jaar onzeker</p> : null}
-            <p className={shared.sleeveTitle}>{reveal.title}</p>
-            <p className={shared.sleeveArtist}>{reveal.artist}</p>
-            {props.canCorrectYears ? (
-              <YearCorrection key={reveal.songId} songId={reveal.songId} cardYear={reveal.cardYear} />
-            ) : null}
-          </div>
-        </section>
-
-        <dl className={shared.scoreboard}>
-          {naming ? (
-            <>
-              <div>
-                <dt>Plek</dt>
-                <Mark right={reveal.correct} />
-              </div>
-              <div>
-                <dt>Artiest (jij: {naming.artistInput || "leeg"})</dt>
-                <Mark right={naming.artistCorrect} />
-              </div>
-              <div>
-                <dt>Titel (jij: {naming.titleInput || "leeg"})</dt>
-                <Mark right={naming.titleCorrect} />
-              </div>
-              {naming.guessedYear !== null ? (
-                <div>
-                  <dt>Jaar (jij: {naming.guessedYear})</dt>
-                  <dd className={naming.yearExact ? shared.good : shared.wrong}>
-                    {yearText(naming.guessedYear, reveal.cardYear)}
-                  </dd>
-                </div>
-              ) : null}
-            </>
-          ) : null}
-          <div>
-            <dt>Tokens ({reveal.tokens} van {MAX_TOKENS})</dt>
-            <dd>{reveal.tokenChange === 0 ? "0" : signed(reveal.tokenChange)}</dd>
-          </div>
-        </dl>
-
-        {reveal.outcome === "won" ? (
-          <p className={styles.record}>
-            10 kaarten in {reveal.songsNeeded} nummers
-            {reveal.newRecord && reveal.personalBest !== null ? " · Nieuw record!" : null}
-          </p>
-        ) : null}
-        {reveal.outcome === "deck_empty" ? (
-          <p className={shared.hint}>De stapel is op. Dit spel krijgt geen score.</p>
-        ) : null}
-
-        <TimelineLadder cards={revealLadder(reveal)} />
-
-        <button type="button" className={shared.cta} onClick={next}>
-          {reveal.nextTrackId === null ? "Naar de uitslag" : "Volgend nummer"}
-        </button>
-      </>
+      <GuessCard
+        layout={layout}
+        variant={props.variant}
+        song={placed + 1}
+        where={where}
+        artist={artist}
+        title={title}
+        onArtist={setArtist}
+        onTitle={setTitle}
+        year={expert ? year : null}
+        onYear={setYear}
+        ready={started}
+        pending={pending}
+        onPlace={place}
+        onClear={() => setGap(null)}
+      />
     );
   }
 
+  const skip = (
+    <SpendButton kind="skip" disabled={locked || tokens < SKIP_COST} onClick={() => play(() => skipSoloSong(props.gameId, placed))} />
+  );
+  const buy = (
+    <SpendButton kind="buy" disabled={locked || tokens < BUY_COST} onClick={() => play(() => buySoloCard(props.gameId, placed))} />
+  );
+  const problemLine = problem ? (
+    <p className={shared.problem} role="alert">
+      {problemText[problem]}
+    </p>
+  ) : null;
+  const count = (
+    <p className={styles.count}>
+      <b>{cardsNow}</b> van {WINNING_CARDS} kaarten
+    </p>
+  );
+
   return (
-    <>
-      <p className={shared.status}>
+    <div className={styles.stage}>
+      {/* Upright: record that shrinks into a bar, compact ladder, actions at the bottom. */}
+      <div className={styles.portrait}>
+        <header className={styles.hero} ref={hero}>
+          <div className={styles.topbar}>
+            <Link href="/" className={styles.back}>
+              ← Home
+            </Link>
+            <span className={styles.songNumber}>Nummer {song}</span>
+          </div>
+          <Vinyl playback={playback} className={styles.heroRecord} />
+          <div className={styles.heroStatus}>
+            <p role="status">{playbackStatusText(playback)}</p>
+            <OnDevice playback={playback} />
+          </div>
+          <div className={styles.heroControls}>
+            <RestartButton playback={playback} />
+            <PlayButton playback={playback} started={started} onStart={startSong} />
+            <ElapsedTime playback={playback} />
+            <DeviceButton playback={playback} />
+          </div>
+          <div className={styles.bar}>
+            <div className={styles.barInfo}>
+              <b>Nummer {song}</b>
+              <span>
+                {playbackStatusText(playback)} · <ElapsedTime playback={playback} className={styles.barTime} />
+              </span>
+            </div>
+            <RestartButton playback={playback} className={styles.barRound} />
+            <PlayButton playback={playback} started={started} onStart={startSong} className={styles.barPlay} />
+            <DeviceButton playback={playback} className={styles.barRound} />
+          </div>
+        </header>
+
+        <section className={`${styles.board} ${reveal ? styles.boardReveal : ""}`} ref={board} aria-label="Jouw tijdlijn">
+          <PlaybackProblem playback={playback} />
+          <div className={styles.boardHead}>
+            {count}
+            <Coins count={reveal ? reveal.tokens : tokens} />
+          </div>
+          {reveal ? null : problemLine}
+          <TimelineLadder
+            compact
+            cards={cards}
+            selected={reveal ? null : gap}
+            onSelect={reveal ? undefined : setGap}
+            disabled={pending}
+            selectedContent={reveal || gap === null ? undefined : guess("card")}
+          />
+        </section>
+
+        {reveal ? null : (
+          <div className={styles.actionBar}>
+            {skip}
+            <p className={`${styles.hint} ${gap !== null ? styles.hintOn : ""}`}>{hint}</p>
+            {buy}
+          </div>
+        )}
+      </div>
+
+      {/* On its side: slim player bar, the timeline to scale, and the orange bar to name and place. */}
+      <div className={styles.landscape}>
+        <div className={styles.topRow}>
+          <Link href="/" className={styles.backSmall} aria-label="Naar home">
+            ←
+          </Link>
+          <Vinyl playback={playback} className={styles.smallRecord} arm={false} />
+          <PlayButton playback={playback} started={started} onStart={startSong} className={styles.barPlay} />
+          <ElapsedTime playback={playback} className={styles.rowTime} />
+          <DeviceButton playback={playback} className={styles.barRound} />
+          <span className={styles.songNumber}>Nummer {song}</span>
+          {count}
+          <span className={styles.spacer} />
+          <OnDevice playback={playback} className={styles.rowDevice} />
+          <Coins count={reveal ? reveal.tokens : tokens} />
+          {skip}
+          {buy}
+        </div>
+        <PlaybackProblem playback={playback} className={styles.floatingProblem} />
+        <YearAxis cards={cards} selected={reveal ? null : gap} onSelect={reveal ? undefined : setGap} disabled={pending} />
+        <div className={styles.bottomRow}>
+          {reveal ? null : gap === null ? <p className={styles.rowHint}>{problem ? problemText[problem] : hint}</p> : guess("bar")}
+        </div>
+      </div>
+
+      {reveal ? <Reveal reveal={reveal} canCorrectYears={props.canCorrectYears} onNext={next} /> : null}
+    </div>
+  );
+}
+
+function Mark({ right }: { right: boolean }) {
+  return <b className={right ? styles.good : styles.wrong}>{right ? "goed" : "fout"}</b>;
+}
+
+// The sleeve after a move: the song, how it went, and the button to the next one. A sheet at
+// the bottom when upright, a panel on the right on its side.
+function Reveal({ reveal, canCorrectYears, onNext }: { reveal: PlacementReveal; canCorrectYears: boolean; onNext: () => void }) {
+  const naming = reveal.naming;
+  const tone = reveal.kind === "skipped" ? styles.skipped : reveal.won ? styles.revealGood : styles.revealWrong;
+  return (
+    <section className={`${styles.reveal} ${tone}`} aria-label="Het nummer">
+      <div className={styles.sleeve}>
+        {reveal.coverUrl ? (
+          // Spotify's own cover, shown as ADR 0001 requires.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img className={styles.cover} src={reveal.coverUrl} alt="" width={76} height={76} />
+        ) : (
+          <span className={styles.cover} aria-hidden="true" />
+        )}
+        <div className={styles.sleeveText}>
+          <p className={styles.verdict}>{verdictOf(reveal)}</p>
+          <p className={styles.sleeveYear}>
+            {reveal.cardYear}
+            {reveal.uncertainYear ? <span className={styles.uncertain}>jaar onzeker</span> : null}
+          </p>
+          <p className={styles.sleeveTitle}>{reveal.title}</p>
+          <p className={styles.sleeveArtist}>{reveal.artist}</p>
+        </div>
+      </div>
+      {canCorrectYears ? <YearCorrection key={reveal.songId} songId={reveal.songId} cardYear={reveal.cardYear} /> : null}
+
+      <p className={styles.scores}>
+        {naming ? (
+          <>
+            <span>
+              Artiest <Mark right={naming.artistCorrect} />
+            </span>
+            <span>
+              Titel <Mark right={naming.titleCorrect} />
+            </span>
+            {naming.guessedYear !== null ? (
+              <span>
+                Jaar <b className={naming.yearExact ? styles.good : styles.wrong}>{yearText(naming.guessedYear, reveal.cardYear)}</b>
+              </span>
+            ) : null}
+          </>
+        ) : null}
         <span>
-          Nummer <b>{placed + 1}</b>
-        </span>
-        <span>
-          <b>{timeline.length}</b> van {WINNING_CARDS} kaarten
+          Tokens <b>{reveal.tokenChange === 0 ? "0" : signed(reveal.tokenChange)}</b>
         </span>
       </p>
-      <RecordPlayer playback={playback} />
-
-      {started ? (
-        <div className={styles.naming}>
-          <div className={shared.field}>
-            <label htmlFor="artist">Artiest</label>
-            <input
-              id="artist"
-              value={artist}
-              onChange={(event) => setArtist(event.target.value)}
-              autoComplete="off"
-              autoCapitalize="words"
-              spellCheck={false}
-              maxLength={200}
-              placeholder={props.variant === "original" ? "Mag leeg, voor een token" : "Typfouten mogen"}
-            />
-          </div>
-          <div className={shared.field}>
-            <label htmlFor="title">Titel</label>
-            <input
-              id="title"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              autoComplete="off"
-              spellCheck={false}
-              maxLength={200}
-              placeholder={props.variant === "original" ? "Mag leeg, voor een token" : "Typfouten mogen"}
-            />
-          </div>
-          {expert ? <YearRuler value={year} onChange={setYear} /> : null}
-        </div>
-      ) : null}
-
-      <section aria-label="Jouw tijdlijn">
-        <Tokens count={tokens} />
-        <TimelineLadder cards={toLadder(timeline)} selected={gap} onSelect={setGap} disabled={pending} />
-      </section>
-
-      {problem ? (
-        <p className={shared.problem} role="alert">
-          {problemText[problem]}
+      {naming && (naming.artistInput || naming.titleInput) ? (
+        <p className={styles.typed}>
+          Jij: {[naming.artistInput, naming.titleInput].filter(Boolean).join(" · ")}
         </p>
       ) : null}
 
-      {started ? (
-        <div className={shared.actions}>
-          <button type="button" className={shared.cta} onClick={place} disabled={gap === null || pending}>
-            {gap === null ? "Tik op een plek" : "Plaatsen"}
-          </button>
-          <div className={styles.spend}>
-            <button
-              type="button"
-              className={shared.secondary}
-              onClick={() => play(() => skipSoloSong(props.gameId, placed))}
-              disabled={tokens < SKIP_COST || pending}
-            >
-              Overslaan · {SKIP_COST}
-            </button>
-            <button
-              type="button"
-              className={shared.secondary}
-              onClick={() => play(() => buySoloCard(props.gameId, placed))}
-              disabled={tokens < BUY_COST || pending}
-            >
-              Kopen · {BUY_COST}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          className={shared.cta}
-          onClick={startSong}
-          disabled={playback.state.status === "verbinden"}
-        >
-          {playback.state.status === "verbinden" ? "Speler verbinden…" : "Zet de plaat op"}
-        </button>
-      )}
-    </>
+      {reveal.outcome === "won" ? (
+        <p className={styles.record}>
+          10 kaarten in {reveal.songsNeeded} nummers
+          {reveal.newRecord && reveal.personalBest !== null ? " · Nieuw record!" : null}
+        </p>
+      ) : null}
+      {reveal.outcome === "deck_empty" ? <p className={shared.hint}>De stapel is op. Dit spel krijgt geen score.</p> : null}
+
+      <button type="button" className={styles.next} onClick={onNext}>
+        {reveal.nextTrackId === null ? "Naar de uitslag" : "Volgend nummer"}
+      </button>
+    </section>
   );
 }

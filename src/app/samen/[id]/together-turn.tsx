@@ -226,7 +226,7 @@ export function TogetherTurn(props: Props) {
           </span>
           <Tokens seat={active} />
         </p>
-        <RecordPlayer playback={playback} />
+        <RecordPlayer playback={playback} started={started} onStart={startSong} />
 
         <section aria-label={`Tijdlijn van ${active.name}`}>
           <h2 className={shared.section}>Tijdlijn van {active.name}</h2>
@@ -266,14 +266,7 @@ export function TogetherTurn(props: Props) {
             ) : null}
           </div>
         ) : (
-          <button
-            type="button"
-            className={shared.cta}
-            onClick={startSong}
-            disabled={playback.state.status === "verbinden"}
-          >
-            {playback.state.status === "verbinden" ? "Speler verbinden…" : "Zet de plaat op"}
-          </button>
+          <p className={shared.hint}>Druk op de oranje play om het nummer te starten.</p>
         )}
       </>
     );
