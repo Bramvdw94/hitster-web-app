@@ -1,8 +1,13 @@
 name: Import catalogue
 
 # Loads editions, cards and songs into Supabase from the snapshots in data/sources/.
-# By hand only. Safe to repeat: it writes only what changed and never touches year_overrides.
+# Safe to repeat: it writes only what changed and never touches year_overrides.
+# Spotify caps a development-mode app per day, so each run looks up at most max_lookups tracks and
+# the next run carries on. The daily run keeps going until every edition is in, then finds nothing new.
 on:
+  schedule:
+    # Every evening at 21:30 UTC (22:30 in the Netherlands).
+    - cron: "30 21 * * *"
   workflow_dispatch:
     inputs:
       editions:
@@ -13,6 +18,10 @@ on:
         description: "Only report, write nothing"
         type: boolean
         default: false
+      max_lookups:
+        description: "At most this many Spotify lookups in this run"
+        default: "250"
+        required: true
 
 concurrency:
   group: import-catalogue
@@ -27,7 +36,8 @@ jobs:
       SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
       SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-      EDITIONS: ${{ inputs.editions }}
+      EDITIONS: ${{ inputs.editions || 'all' }}
+      MAX_LOOKUPS: ${{ inputs.max_lookups || '250' }}
       DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
     steps:
       - uses: actions/checkout@v4
@@ -36,4 +46,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run import:catalogue -- --editions "$EDITIONS" $DRY_RUN
+      - run: npm run import:catalogue -- --editions "$EDITIONS" --max-lookups "$MAX_LOOKUPS" $DRY_RUN
