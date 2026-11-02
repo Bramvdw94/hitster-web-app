@@ -31,13 +31,25 @@ describe("lookupFirstReleaseYear", () => {
         ],
       }),
     );
-    await expect(lookupFirstReleaseYear("The Beatles", "Let It Be - Remastered 2009", { fetchFn })).resolves.toBe(1970);
+    await expect(lookupFirstReleaseYear("The Beatles", "Let It Be - Remastered 2009", { fetchFn, delayMs: 0 })).resolves.toBe(1970);
     expect(String(fetchFn.mock.calls[0][0])).toContain(encodeURIComponent('recording:"Let It Be"'));
+  });
+
+  it("searches again for earlier releases than the first page held", async () => {
+    const fetchFn = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(json(200, { recordings: [{ title: "Respect", score: 100, "first-release-date": "1987-05-01" }] }))
+      .mockResolvedValueOnce(json(200, { recordings: [{ title: "Respect", score: 100, "first-release-date": "1967-04-29" }] }))
+      .mockResolvedValueOnce(json(200, { recordings: [] }));
+    await expect(lookupFirstReleaseYear("Aretha Franklin", "Respect", { fetchFn, delayMs: 0 })).resolves.toBe(1967);
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    expect(decodeURIComponent(String(fetchFn.mock.calls[1][0]))).toContain("firstreleasedate:[0 TO 1986-12-31]");
+    expect(decodeURIComponent(String(fetchFn.mock.calls[2][0]))).toContain("firstreleasedate:[0 TO 1966-12-31]");
   });
 
   it("gives no year when nothing matches", async () => {
     const fetchFn = async () => json(200, { recordings: [{ title: "Other", score: 100, "first-release-date": "1980" }] });
-    await expect(lookupFirstReleaseYear("X", "Song", { fetchFn })).resolves.toBeNull();
+    await expect(lookupFirstReleaseYear("X", "Song", { fetchFn, delayMs: 0 })).resolves.toBeNull();
   });
 
   it("tells an unanswered request apart from no match", async () => {
