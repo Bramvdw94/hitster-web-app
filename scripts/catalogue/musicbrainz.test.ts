@@ -52,6 +52,14 @@ describe("lookupFirstReleaseYear", () => {
     await expect(lookupFirstReleaseYear("X", "Song", { fetchFn, delayMs: 0 })).resolves.toBeNull();
   });
 
+  it("retries a network error and then leaves the song for the next run", async () => {
+    const fetchFn = vi.fn<typeof fetch>(async () => {
+      throw new TypeError("fetch failed");
+    });
+    await expect(lookupFirstReleaseYear("X", "Song", { fetchFn, retryDelayMs: 1 })).resolves.toBeUndefined();
+    expect(fetchFn).toHaveBeenCalledTimes(4);
+  });
+
   it("tells an unanswered request apart from no match", async () => {
     const fetchFn = async () => json(500, {});
     await expect(lookupFirstReleaseYear("X", "Song", { fetchFn })).resolves.toBeUndefined();
