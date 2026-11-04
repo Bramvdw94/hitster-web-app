@@ -22,8 +22,14 @@ async function get(
 ): Promise<Response> {
   let response: Response;
   for (let attempt = 1; ; attempt++) {
-    response = await fetchFn(url, { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
-    if ((response.status !== 503 && response.status !== 429) || attempt >= maxAttempts) return response;
+    try {
+      response = await fetchFn(url, { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
+    } catch {
+      // A network error ("fetch failed") is retried like a busy server, and in the end reads as an
+      // unanswered request instead of stopping the whole import.
+      response = new Response(null, { status: 599, statusText: "fetch failed" });
+    }
+    if ((response.status !== 503 && response.status !== 429 && response.status !== 599) || attempt >= maxAttempts) return response;
     await sleep(retryDelayMs * attempt);
   }
 }

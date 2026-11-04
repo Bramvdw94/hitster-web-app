@@ -84,6 +84,7 @@ async function main() {
   }
   const best = bestYears([...joined.values()].map((j) => j.cards));
   const musicbrainzYears = new Map<string, number | null>();
+  let musicbrainzFailuresInARow = 0;
 
   for (const config of editions) {
     if (stopped) break;
@@ -142,10 +143,14 @@ async function main() {
     for (const id of askMusicbrainz) {
       const card = incoming.find((c) => c.spotifyTrackId === id)!;
       const artist = card.track?.artists[0]?.name ?? card.cardArtist.split(", ")[0];
+      if (musicbrainzFailuresInARow >= 5) break;
       const year = await lookupFirstReleaseYear(artist, card.title);
       if (year !== undefined) {
         musicbrainzYears.set(id, year);
         askedMusicbrainz.push(id);
+        musicbrainzFailuresInARow = 0;
+      } else if (++musicbrainzFailuresInARow === 5) {
+        console.log("MusicBrainz did not answer 5 times in a row; the rest waits for the next run");
       }
       await sleep(MUSICBRAINZ_DELAY_MS);
     }
